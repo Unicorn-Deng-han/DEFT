@@ -96,7 +96,7 @@ img,svg,canvas{display:block;max-width:100%}
    3. 水彩晕染背景
    ============================================================ */
 .bg-wash{position:fixed;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
-.bg-wash .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:multiply;animation:drift 26s var(--ease) infinite alternate}
+.bg-wash .blob{position:absolute;border-radius:50%;filter:blur(46px);opacity:.5;will-change:transform;transform:translateZ(0);animation:drift 28s var(--ease) infinite alternate}
 .bg-wash .b1{width:52vw;height:52vw;left:-14vw;top:-18vw;background:radial-gradient(circle at 50% 50%,#ccd7e8,transparent 68%)}
 .bg-wash .b2{width:44vw;height:44vw;right:-12vw;top:8vh;background:radial-gradient(circle at 50% 50%,#bccce0,transparent 66%);animation-delay:-8s}
 .bg-wash .b3{width:46vw;height:46vw;left:26vw;bottom:-22vw;background:radial-gradient(circle at 50% 50%,#dbe2ee,transparent 70%);animation-delay:-16s}
@@ -595,6 +595,34 @@ tbody td.num{font-family:"Inter",sans-serif;font-weight:600}
 .video-feature .vf-body b{font-size:18px;color:var(--ink);display:block;margin-top:16px}
 .video-feature .vf-body p{font-size:13.5px;color:var(--ink-3);margin-top:6px;line-height:1.6}
 .video-feature .vf-body .tag{display:inline-block;margin-top:12px;font-size:11.5px;font-weight:600;color:var(--brand-600);background:var(--brand-100);padding:4px 12px;border-radius:99px}
+
+/* 科普视频画廊 */
+.edu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.edu-card{border-radius:var(--r-lg);overflow:hidden;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.edu-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-glow)}
+.edu-media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--brand-100),var(--brand-50));overflow:hidden}
+.edu-media img,.edu-media video{width:100%;height:100%;object-fit:cover;display:block;background:var(--brand-100)}
+.edu-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  padding:20px;text-align:center;color:var(--ink-3)}
+.edu-fallback[hidden]{display:none}
+.edu-fallback svg{width:34px;height:34px;color:var(--brand-400)}
+.edu-fallback b{font-size:13.5px;color:var(--ink-2);font-weight:600}
+.edu-fallback a{font-size:12px;color:var(--brand-600);font-weight:600}
+.edu-fallback a:hover{color:var(--brand-800)}
+.edu-body{padding:18px 20px 20px}
+.edu-body b{font-size:16px;color:var(--ink);display:block}
+.edu-body p{font-size:13px;color:var(--ink-3);margin-top:6px;line-height:1.6}
+.edu-body .tag{display:inline-block;margin-top:12px;font-size:11px;font-weight:600;color:var(--brand-600);background:var(--brand-100);padding:4px 12px;border-radius:99px}
+.edu-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.edu-foot .tag{margin-top:0}
+.edu-src{font-size:12px;font-weight:600;color:var(--brand-600);white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
+.edu-src:hover{color:var(--brand-800)}
+.edu-note{margin-top:16px;font-size:12.5px;color:var(--ink-4);line-height:1.6}
+@media (max-width:760px){ .edu-grid{grid-template-columns:1fr} }
+
+/* 分析页内「历史记录」子区块（与分析合并、上下滚动） */
+.history-block{margin-top:clamp(56px,8vw,96px);padding-top:clamp(40px,6vw,64px);border-top:1px solid var(--line-soft)}
 @media (max-width:900px){ .spec-grid{grid-template-columns:repeat(2,1fr)} }
 @media (max-width:760px){ .steps{grid-template-columns:1fr} .scenario-grid{grid-template-columns:1fr} }
 
@@ -618,7 +646,35 @@ html.js .reveal.in{opacity:1;transform:none}
 .reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
 
 /* ============================================================
-   15. 响应式
+   15. 性能优化（降低滚动/合成开销，改善流畅度）
+   ============================================================ */
+/* 装饰性卡片/面板取消 backdrop-filter（保留顶栏、通知、弹窗的玻璃效果）*/
+.card,.panel,.stat-card,.chart-panel,.diff,.flow-step,
+.rec-card,.arch,.step,.scenario,.video-feature,.video-card,
+.ecg-card,.btn-ghost{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+/* 取消毛玻璃后用更实的底色补齐可读性，视觉几乎不变 */
+.card,.panel,.stat-card,.chart-panel,.diff,.flow-step,
+.rec-card,.arch,.step,.scenario,.video-card,.btn-ghost{
+  background:rgba(255,255,255,.8);
+}
+
+/* 尊重系统「减少动态效果」设置：关闭漂移/平滑滚动/显现动画 */
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  .bg-wash .blob{animation:none}
+  html.js .reveal{opacity:1;transform:none;transition:none}
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+
+/* ============================================================
+   16. 响应式
    ============================================================ */
 @media (max-width:1080px){
   .hero-grid{grid-template-columns:1fr}
@@ -683,7 +739,6 @@ html.js .reveal.in{opacity:1;transform:none}
     <a href="#home" data-nav="home">首页</a>
     <a href="#features" data-nav="features">功能页</a>
     <a href="#analysis" data-nav="analysis">智能分析</a>
-    <a href="#history" data-nav="history">历史记录</a>
     <a href="#about" data-nav="about">About us</a>
   </nav>
   <div class="spacer"></div>
@@ -803,24 +858,90 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="section-head" style="margin-bottom:28px">
           <span class="eyebrow">科普 · Education</span>
           <h2>心脏疾病<em>科普视频</em></h2>
-          <p class="lead">向下滑动到此——用 3 分钟快速理解心电图与心律失常，为读懂分析报告打好基础。</p>
+          <p class="lead">精选多个开源科普动画与视频——从 P-QRS-T 波形到房颤、心梗、传导阻滞，边看边学，快速读懂分析报告。</p>
         </div>
-        <div class="video-feature">
-          <div class="vf-player">
-            <!-- 开源科普动画（Wikimedia Commons · CC 授权）· 页内直接展示。
-                 如需替换为自己的科普视频，把下面 <img> 换成：
-                 <video controls poster="..."><source src="你的视频.mp4" type="video/mp4"></video> -->
-            <img src="https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20Principle%20fast.gif"
-                 alt="心电原理科普动画"
-                 style="width:100%;height:100%;object-fit:cover;display:block"
-                 onerror="this.onerror=null;this.src='https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20principle%20slow.gif';">
+        <div class="edu-grid">
+          <div class="edu-card">
+            <div class="edu-media">
+              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20Principle%20fast.gif"
+                   alt="心电原理科普动画" loading="lazy" decoding="async">
+              <div class="edu-fallback" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 9l6 3-6 3V9z"/><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg>
+                <b>动画暂时无法加载</b>
+                <a href="https://commons.wikimedia.org/wiki/File:ECG_Principle_fast.gif" target="_blank" rel="noopener">前往原页查看 ↗</a>
+              </div>
+            </div>
+            <div class="edu-body">
+              <b>心电原理 · P-QRS-T 波形</b>
+              <p>从 P 波、QRS 波群到 T 波，一图看懂一次心跳的完整电活动与各波段对应的心脏收缩。</p>
+              <div class="edu-foot">
+                <span class="tag">开源动画 · Wikimedia Commons</span>
+                <a class="edu-src" href="https://commons.wikimedia.org/wiki/File:ECG_Principle_fast.gif" target="_blank" rel="noopener">来源 ↗</a>
+              </div>
+            </div>
           </div>
-          <div class="vf-body">
-            <b>心电原理科普动画</b>
-            <p>从 P-QRS-T 波形到房颤、早搏、传导阻滞，一图一解、通俗易懂。开源动画在页内直接展示，无需跳转外站。</p>
-            <span class="tag">开源素材 · Wikimedia Commons</span>
+
+          <div class="edu-card">
+            <div class="edu-media">
+              <video controls preload="none" playsinline
+                     src="https://commons.wikimedia.org/wiki/Special:FilePath/Atrial%20fibrillation%20video.webm"></video>
+              <div class="edu-fallback" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 9l6 3-6 3V9z"/><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg>
+                <b>视频暂时无法加载</b>
+                <a href="https://commons.wikimedia.org/wiki/File:Atrial_fibrillation_video.webm" target="_blank" rel="noopener">前往原页查看 ↗</a>
+              </div>
+            </div>
+            <div class="edu-body">
+              <b>心房颤动（房颤）</b>
+              <p>最常见的持续性心律失常之一：心房无序颤动、心跳快而不规则，显著增加卒中风险。</p>
+              <div class="edu-foot">
+                <span class="tag">开源视频 · Wikimedia Commons</span>
+                <a class="edu-src" href="https://commons.wikimedia.org/wiki/File:Atrial_fibrillation_video.webm" target="_blank" rel="noopener">来源 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="edu-card">
+            <div class="edu-media">
+              <video controls preload="none" playsinline
+                     src="https://commons.wikimedia.org/wiki/Special:FilePath/Heart%20attack%20video.webm"></video>
+              <div class="edu-fallback" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 9l6 3-6 3V9z"/><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg>
+                <b>视频暂时无法加载</b>
+                <a href="https://commons.wikimedia.org/wiki/File:Heart_attack_video.webm" target="_blank" rel="noopener">前往原页查看 ↗</a>
+              </div>
+            </div>
+            <div class="edu-body">
+              <b>心肌梗死（心脏病发作）</b>
+              <p>冠状动脉堵塞导致心肌缺血坏死，典型表现为持续胸痛，是心内科急症。</p>
+              <div class="edu-foot">
+                <span class="tag">开源视频 · Wikimedia Commons</span>
+                <a class="edu-src" href="https://commons.wikimedia.org/wiki/File:Heart_attack_video.webm" target="_blank" rel="noopener">来源 ↗</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="edu-card">
+            <div class="edu-media">
+              <video controls preload="none" playsinline
+                     src="https://commons.wikimedia.org/wiki/Special:FilePath/Bundle%20branch%20block%20video.webm"></video>
+              <div class="edu-fallback" hidden>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 9l6 3-6 3V9z"/><circle cx="12" cy="12" r="9"/><path d="M4.9 4.9l14.2 14.2"/></svg>
+                <b>视频暂时无法加载</b>
+                <a href="https://commons.wikimedia.org/wiki/File:Bundle_branch_block_video.webm" target="_blank" rel="noopener">前往原页查看 ↗</a>
+              </div>
+            </div>
+            <div class="edu-body">
+              <b>束支传导阻滞</b>
+              <p>心室内传导通路受阻、QRS 波群增宽变形；右束支阻滞常为良性，左束支阻滞需警惕器质性心脏病。</p>
+              <div class="edu-foot">
+                <span class="tag">开源视频 · Wikimedia Commons</span>
+                <a class="edu-src" href="https://commons.wikimedia.org/wiki/File:Bundle_branch_block_video.webm" target="_blank" rel="noopener">来源 ↗</a>
+              </div>
+            </div>
           </div>
         </div>
+        <p class="edu-note">以上均为 Wikimedia Commons 开放授权（CC BY / CC BY-SA）科普素材，页内直接播放、无需跳转外站；动画与视频仅在需要时加载，不影响页面流畅度。</p>
       </div>
 
       <div class="home-block reveal">
@@ -1044,7 +1165,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="conn offline" id="connStatus">
             <span class="state"></span>
             <b id="connLabel">未连接后端模型</b>
-            <span id="connHint">将使用浏览器内演示模式</span>
+            <span id="connHint">未检测到后端 → 演示模式；本地请访问 127.0.0.1:8000</span>
             <button class="try" id="retryConn">重试</button>
           </div>
 
@@ -1091,39 +1212,37 @@ html.js .reveal.in{opacity:1;transform:none}
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- HISTORY -->
-  <section id="history">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">历史记录 · History</span>
-        <h2>分析历史，<em>随时回看</em></h2>
-        <p class="lead">每次完成的心电分析都会保存在本机浏览器，可随时回看诊断结论、导出分析报告，或删除不再需要的记录。</p>
+      <!-- 分析历史（与「智能分析」同页 · 上下滚动查看） -->
+      <div class="history-block">
+        <div class="section-head reveal">
+          <span class="eyebrow">历史记录 · History</span>
+          <h2>分析历史，<em>随时回看</em></h2>
+          <p class="lead">每次完成的心电分析都会保存在本机浏览器，可随时回看诊断结论、导出分析报告，或删除不再需要的记录。</p>
+        </div>
+
+        <div class="history-toolbar reveal">
+          <span style="font-size:13px;color:var(--ink-3)">共 <b id="historyCount" style="color:var(--brand-700)">0</b> 条记录（仅保存在本机浏览器）</span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" id="clearHistory" style="color:var(--danger)">清空历史</button>
+        </div>
+
+        <div class="stat-grid reveal" style="margin-bottom:22px">
+          <div class="stat-card"><div class="k">总分析次数</div><div class="v" id="hTotal">0</div><div class="d">累计完成的推理</div></div>
+          <div class="stat-card"><div class="k">最近诊断</div><div class="v" id="hLatest" style="font-size:20px">—</div><div class="d">最近一次结论</div></div>
+          <div class="stat-card"><div class="k">平均置信度</div><div class="v" id="hAvg">—</div><div class="d">Top-1 平均置信度</div></div>
+          <div class="stat-card"><div class="k">记录状态</div><div class="v" style="font-size:18px">仅本机</div><div class="d">数据保存在浏览器</div></div>
+        </div>
+
+        <div class="history-empty reveal" id="historyEmpty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>
+          <b>暂无分析记录</b>
+          <p>在上方上传一份 12 导联心电数据并运行分析，结果会自动保存在这里。</p>
+          <a class="btn btn-primary" href="#analysis" style="margin-top:18px">回到上方上传分析</a>
+        </div>
+
+        <div class="rec-list" id="historyList"></div>
       </div>
-
-      <div class="history-toolbar reveal">
-        <span style="font-size:13px;color:var(--ink-3)">共 <b id="historyCount" style="color:var(--brand-700)">0</b> 条记录（仅保存在本机浏览器）</span>
-        <span class="spacer"></span>
-        <button class="btn btn-ghost" id="clearHistory" style="color:var(--danger)">清空历史</button>
-      </div>
-
-      <div class="stat-grid reveal" style="margin-bottom:22px">
-        <div class="stat-card"><div class="k">总分析次数</div><div class="v" id="hTotal">0</div><div class="d">累计完成的推理</div></div>
-        <div class="stat-card"><div class="k">最近诊断</div><div class="v" id="hLatest" style="font-size:20px">—</div><div class="d">最近一次结论</div></div>
-        <div class="stat-card"><div class="k">平均置信度</div><div class="v" id="hAvg">—</div><div class="d">Top-1 平均置信度</div></div>
-        <div class="stat-card"><div class="k">记录状态</div><div class="v" style="font-size:18px">仅本机</div><div class="d">数据保存在浏览器</div></div>
-      </div>
-
-      <div class="history-empty reveal" id="historyEmpty">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>
-        <b>暂无分析记录</b>
-        <p>前往「智能分析」上传一份 12 导联心电数据并运行分析，结果会自动保存在这里。</p>
-        <a class="btn btn-primary" href="#analysis" style="margin-top:18px">去分析一份心电</a>
-      </div>
-
-      <div class="rec-list" id="historyList"></div>
     </div>
   </section>
 
@@ -1395,7 +1514,7 @@ $('#mobileHamburger').addEventListener('click', ()=>{
 /* ============================================================
    2. 页面切换（点击导航切换页面）
    ============================================================ */
-const pages = ['home','features','analysis','history','about'];
+const pages = ['home','features','analysis','about'];
 const topLinks = $$('.topnav a[data-nav]');
 
 function showPage(id){
@@ -1465,77 +1584,145 @@ function ecgSample(leadIdx, t){
   return wave + wander;
 }
 
-function drawECG(){
+/* 按需渲染状态 */
+const ecg = {
+  ctx:null, W:320, H:200,
+  rows:12, topPad:26, botPad:14, leftPad:34, rightPad:12, rowH:0,
+  timeWindow:6, step:2, running:false, raf:0, last:0
+};
+
+function ecgSetup(){
   const dpr = window.devicePixelRatio || 1;
   const rect = ecgCanvas.getBoundingClientRect();
-  const W = Math.max(320, rect.width);
+  const W = Math.max(320, rect.width || 320);
   const H = Math.round(W * 0.625);
-  ecgCanvas.width = W * dpr;
-  ecgCanvas.height = H * dpr;
-  const ctx = ecgCanvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-
-  const rows = 12;
-  const topPad = 26, botPad = 14, leftPad = 34, rightPad = 12;
-  const rowH = (H - topPad - botPad) / rows;
-  const timeWindow = 6;   // 秒
-
-  function frame(now){
-    const t = now/1000;
-    ctx.clearRect(0,0,W,H);
-
-    // 网格
-    ctx.strokeStyle = 'rgba(104,133,172,0.08)';
-    ctx.lineWidth = 1;
-    for(let i=0;i<rows;i++){
-      const y = topPad + i*rowH + rowH/2;
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-    for(let x=0;x<W;x+=40){
-      ctx.beginPath(); ctx.moveTo(x,topPad); ctx.lineTo(x,H-botPad); ctx.stroke();
-    }
-
-    // 导联标签
-    ctx.font = '600 11px Inter, sans-serif';
-    ctx.fillStyle = 'rgba(61,74,92,0.55)';
-    ctx.textAlign = 'right';
-    for(let i=0;i<rows;i++){
-      const y = topPad + i*rowH + rowH/2 + 4;
-      ctx.fillText(LEAD_NAMES[i], leftPad-8, y);
-    }
-
-    // 波形
-    for(let i=0;i<rows;i++){
-      const cy = topPad + i*rowH + rowH/2;
-      const amp = rowH*0.36;
-      ctx.strokeStyle = i===1 ? 'rgba(83,109,148,0.95)' : 'rgba(83,109,148,0.75)';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      const N = Math.max(2, Math.floor(W-leftPad-rightPad));
-      for(let px=0; px<=N; px++){
-        const tt = t - timeWindow + (px/N)*timeWindow + (i*0.013); // 各导联微错相，随时间滚动
-        const v = ecgSample(i, tt);
-        const x = leftPad + px;
-        const y = cy - v*amp;
-        if(px===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-      }
-      ctx.stroke();
-    }
-
-    // 顶部标题行
-    ctx.fillStyle = 'rgba(37,48,63,0.65)';
-    ctx.font = '600 11px Inter, sans-serif';
-    ctx.textAlign = 'left';
-    ctx.fillText('12-lead · 70 bpm · simulated', 14, 15);
-    ctx.fillStyle = 'rgba(104,133,172,0.9)';
-    ctx.fillText('●', W-16, 15);
-
-    requestAnimationFrame(frame);
+  if(ecgCanvas.width !== Math.round(W*dpr) || ecgCanvas.height !== Math.round(H*dpr)){
+    ecgCanvas.width = Math.round(W*dpr);
+    ecgCanvas.height = Math.round(H*dpr);
   }
-  requestAnimationFrame(frame);
+  const ctx = ecgCanvas.getContext('2d');
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ecg.ctx = ctx; ecg.W = W; ecg.H = H;
+  ecg.rowH = (H - ecg.topPad - ecg.botPad) / ecg.rows;
 }
-drawECG();
-let ecgResize; window.addEventListener('resize', ()=>{ clearTimeout(ecgResize); ecgResize=setTimeout(drawECG,200); });
+
+function ecgFrame(now){
+  if(!ecg.running) return;
+  ecg.raf = requestAnimationFrame(ecgFrame);
+  // 30fps 节流：视觉无差别，CPU/GPU 减半
+  if(now - ecg.last < 33) return;
+  ecg.last = now;
+
+  const {ctx,W,H,rows,topPad,botPad,leftPad,rightPad,rowH,timeWindow,step} = ecg;
+  const t = now/1000;
+  ctx.clearRect(0,0,W,H);
+
+  // 网格
+  ctx.strokeStyle = 'rgba(104,133,172,0.08)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<rows;i++){
+    const y = topPad + i*rowH + rowH/2;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+  }
+  for(let x=0;x<W;x+=40){
+    ctx.beginPath(); ctx.moveTo(x,topPad); ctx.lineTo(x,H-botPad); ctx.stroke();
+  }
+
+  // 导联标签
+  ctx.font = '600 11px Inter, sans-serif';
+  ctx.fillStyle = 'rgba(61,74,92,0.55)';
+  ctx.textAlign = 'right';
+  for(let i=0;i<rows;i++){
+    const y = topPad + i*rowH + rowH/2 + 4;
+    ctx.fillText(LEAD_NAMES[i], leftPad-8, y);
+  }
+
+  // 波形（每 step 像素采样一次，端点保留）
+  const N = Math.max(2, Math.floor(W-leftPad-rightPad));
+  for(let i=0;i<rows;i++){
+    const cy = topPad + i*rowH + rowH/2;
+    const amp = rowH*0.36;
+    ctx.strokeStyle = i===1 ? 'rgba(83,109,148,0.95)' : 'rgba(83,109,148,0.75)';
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    let started = false;
+    for(let px=0; px<=N; px++){
+      if(px<N && px%step!==0) continue; // 跳过中间点，仅降低采样密度
+      const tt = t - timeWindow + (px/N)*timeWindow + (i*0.013); // 各导联微错相，随时间滚动
+      const v = ecgSample(i, tt);
+      const x = leftPad + px;
+      const y = cy - v*amp;
+      if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+
+  // 顶部标题行
+  ctx.fillStyle = 'rgba(37,48,63,0.65)';
+  ctx.font = '600 11px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('12-lead · 70 bpm · simulated', 14, 15);
+  ctx.fillStyle = 'rgba(104,133,172,0.9)';
+  ctx.fillText('●', W-16, 15);
+}
+
+const REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function ecgStart(){
+  if(ecg.running) return;
+  ecgSetup();
+  ecg.running = true;
+  if(REDUCED_MOTION){
+    // 系统「减少动态效果」：仅绘制一帧静态波形，不循环
+    ecg.last = 0;
+    ecgFrame(performance.now());
+    ecg.running = false;
+    if(ecg.raf){ cancelAnimationFrame(ecg.raf); ecg.raf = 0; }
+    return;
+  }
+  ecg.last = performance.now();
+  ecg.raf = requestAnimationFrame(ecgFrame);
+}
+function ecgStop(){
+  ecg.running = false;
+  if(ecg.raf){ cancelAnimationFrame(ecg.raf); ecg.raf = 0; }
+}
+
+// 仅在画布进入视口时运行动画（滚出视口 / 切到其它页面即暂停）
+if('IntersectionObserver' in window){
+  new IntersectionObserver(entries=>{
+    if(entries.some(en=>en.isIntersecting)) ecgStart(); else ecgStop();
+  }, {threshold:0}).observe(ecgCanvas);
+} else {
+  ecgStart();
+}
+
+let ecgResize; window.addEventListener('resize', ()=>{ clearTimeout(ecgResize); ecgResize=setTimeout(()=>{ if(ecg.running) ecgSetup(); },200); });
+
+/* ============================================================
+   4b. 科普媒体：加载失败兜底
+   ============================================================ */
+function eduFallback(media){
+  media.style.display = 'none';
+  const fb = media.nextElementSibling;
+  if(fb && fb.classList.contains('edu-fallback')) fb.hidden = false;
+}
+
+// 图片：先尝试慢速版，再兜底
+const eduImg = document.querySelector('.edu-media img');
+if(eduImg){
+  const SLOW_GIF = 'https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20principle%20slow.gif';
+  eduImg.addEventListener('error', function(){
+    if(this.dataset.retried){ eduFallback(this); return; }
+    this.dataset.retried = '1';
+    this.src = SLOW_GIF;
+  });
+}
+
+// 视频：加载失败即显示兜底占位
+$$('.edu-media video').forEach(v=>{
+  v.addEventListener('error', ()=>{ eduFallback(v); });
+});
 
 /* ============================================================
    5. 数字滚动
@@ -1737,7 +1924,7 @@ async function checkBackend(){
   backendOnline = false;
   connStatus.className = 'conn offline';
   $('#connLabel').textContent = '未连接后端模型';
-  $('#connHint').textContent = '将使用浏览器内演示模式';
+  $('#connHint').textContent = '未检测到后端 → 演示模式；本地请访问 127.0.0.1:8000';
   $('#modeBadge').textContent = '演示模式';
   $('#modeBadge').style.cssText = 'color:var(--sand);background:rgba(185,196,216,.2)';
   return false;
