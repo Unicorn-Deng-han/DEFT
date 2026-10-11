@@ -1,0 +1,1922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>心域智能 · DEFT 心电辅助平台</title>
+<meta name="description" content="基于 DEFT（Dual-Domain Multi-resolution Fusion Transformer）的心电辅助分析平台——双域多分辨率融合，为临床提供透明、可解释的智能心电分析。" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23536d94'/%3E%3Cpath d='M8 32h10l5-14 8 28 8-20 5 6h12' fill='none' stroke='%23eaf0f8' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+<style>
+/* ============================================================
+   1. DESIGN TOKENS —— Morandi 单色 · 水彩晕染 · 玻璃拟态
+   ============================================================ */
+:root{
+  /* 莫兰迪鼠尾草绿（monochromatic） */
+  --bg:        #f3f5f8;
+  --bg-2:      #edf0f5;
+  --surface:   rgba(255,255,255,.58);
+  --surface-2: rgba(255,255,255,.42);
+  --glass:     rgba(255,255,255,.55);
+  --line:      rgba(64,86,120,.12);
+  --line-soft: rgba(64,86,120,.07);
+
+  --ink:       #25303f;
+  --ink-2:     #3d4a5c;
+  --ink-3:     #66748a;
+  --ink-4:     #99a5b6;
+
+  --brand-50:  #eef1f7;
+  --brand-100: #dfe6f1;
+  --brand-200: #c6d3e6;
+  --brand-300: #a7bad7;
+  --brand-400: #859ec2;
+  --brand-500: #6885ac;
+  --brand-600: #536d94;
+  --brand-700: #43577a;
+  --brand-800: #344663;
+  --brand-900: #28374e;
+
+  /* 极少量暖砂点缀，仍属低饱和、贴近单色 */
+  --sand:      #b9c4d8;
+  --sand-soft: #d4dce8;
+
+  --danger:    #b06a6a;
+  --ok:        #6885ac;
+
+  --shadow-sm: 0 1px 2px rgba(37,48,63,.06), 0 2px 8px rgba(37,48,63,.05);
+  --shadow-md: 0 2px 6px rgba(37,48,63,.07), 0 12px 32px rgba(37,48,63,.09);
+  --shadow-lg: 0 8px 24px rgba(37,48,63,.10), 0 32px 80px rgba(37,48,63,.14);
+  --shadow-glow: 0 0 0 1px rgba(104,133,172,.16), 0 12px 40px rgba(104,133,172,.22);
+
+  --r-sm: 12px;
+  --r-md: 18px;
+  --r-lg: 26px;
+  --r-xl: 34px;
+
+  --header-h: 66px;
+
+  --ease: cubic-bezier(.22,.61,.36,1);
+  --ease-spring: cubic-bezier(.34,1.4,.44,1);
+}
+
+/* ============================================================
+   2. RESET & BASE
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:"Inter","SF Pro Text","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,-apple-system,sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  line-height:1.65;
+  letter-spacing:.01em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:hidden;
+  min-height:100vh;
+}
+h1,h2,h3,.serif{
+  font-family:"Source Han Serif SC","Noto Serif SC","STSong","SimSun",Georgia,serif;
+  font-weight:600;
+  letter-spacing:.005em;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;color:inherit}
+img,svg,canvas{display:block;max-width:100%}
+::selection{background:var(--brand-200);color:var(--brand-900)}
+
+/* 滚动条 */
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brand-200);border-radius:99px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:var(--brand-300);background-clip:content-box}
+
+/* ============================================================
+   3. 水彩晕染背景
+   ============================================================ */
+.bg-wash{position:fixed;inset:0;z-index:-3;overflow:hidden;pointer-events:none}
+.bg-wash .blob{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:multiply;animation:drift 26s var(--ease) infinite alternate}
+.bg-wash .b1{width:52vw;height:52vw;left:-14vw;top:-18vw;background:radial-gradient(circle at 50% 50%,#ccd7e8,transparent 68%)}
+.bg-wash .b2{width:44vw;height:44vw;right:-12vw;top:8vh;background:radial-gradient(circle at 50% 50%,#bccce0,transparent 66%);animation-delay:-8s}
+.bg-wash .b3{width:46vw;height:46vw;left:26vw;bottom:-22vw;background:radial-gradient(circle at 50% 50%,#dbe2ee,transparent 70%);animation-delay:-16s}
+.bg-wash .b4{width:26vw;height:26vw;right:22vw;bottom:12vh;background:radial-gradient(circle at 50% 50%,#cdd6e6,transparent 62%);opacity:.34;animation-delay:-5s}
+@keyframes drift{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  50%{transform:translate3d(4vw,3vh,0) scale(1.08)}
+  100%{transform:translate3d(-3vw,-4vh,0) scale(.95)}
+}
+/* 纸张颗粒 */
+.grain{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.5;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   4. 顶栏
+   ============================================================ */
+.topbar{
+  position:fixed;top:14px;left:14px;right:14px;height:var(--header-h);z-index:60;
+  display:flex;align-items:center;gap:16px;padding:0 20px;
+  background:rgba(250,251,253,.82);
+  backdrop-filter:blur(20px) saturate(1.4);
+  -webkit-backdrop-filter:blur(20px) saturate(1.4);
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow-md);
+  transition:box-shadow .3s var(--ease),background .3s var(--ease);
+}
+.topbar.scrolled{box-shadow:var(--shadow-lg)}
+.topbar .brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{
+  width:38px;height:38px;flex:0 0 auto;border-radius:12px;position:relative;
+  background:linear-gradient(135deg,var(--brand-500),var(--brand-700));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 18px rgba(67,87,122,.35);
+  display:grid;place-items:center;
+}
+.brand-mark svg{width:22px;height:22px}
+.brand-name{font-weight:700;font-size:16.5px;letter-spacing:.02em;white-space:nowrap}
+.brand-name .sub{display:block;font-size:10.5px;font-weight:500;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase}
+
+.topbar .topnav{display:flex;align-items:center;gap:4px;margin-left:10px}
+.topbar .topnav a{
+  position:relative;padding:9px 15px;font-size:14.5px;color:var(--ink-2);font-weight:500;white-space:nowrap;
+  transition:color .25s var(--ease);
+}
+.topbar .topnav a::after{
+  content:"";position:absolute;left:50%;bottom:3px;width:0;height:2px;border-radius:2px;
+  background:linear-gradient(90deg,var(--brand-500),var(--brand-400));
+  transform:translateX(-50%);transition:width .3s var(--ease);
+}
+.topbar .topnav a:hover{color:var(--brand-800)}
+.topbar .topnav a:hover::after{width:44%}
+.topbar .topnav a.active{color:var(--brand-700);font-weight:650}
+.topbar .topnav a.active::after{width:44%}
+
+.topbar .spacer{flex:1}
+.topbar .actions{display:flex;align-items:center;gap:10px}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px;display:grid;place-items:center;position:relative;
+  color:var(--ink-2);transition:background .25s var(--ease),color .25s var(--ease),transform .25s var(--ease);
+}
+.icon-btn:hover{background:var(--brand-100);color:var(--brand-800)}
+.icon-btn:active{transform:scale(.92)}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn .dot{
+  position:absolute;top:9px;right:10px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;
+  background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;
+  border:2px solid var(--bg);line-height:1;
+}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 20px;border-radius:12px;font-size:14px;font-weight:600;white-space:nowrap;
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease),background .25s var(--ease),color .25s var(--ease);
+}
+.btn:active{transform:translateY(1px) scale(.98)}
+.btn-primary{
+  color:#f5f7fb;background:linear-gradient(135deg,var(--brand-500),var(--brand-700));
+  box-shadow:0 8px 22px rgba(67,87,122,.32),inset 0 1px 0 rgba(255,255,255,.22);
+}
+.btn-primary:hover{box-shadow:0 12px 30px rgba(67,87,122,.42),inset 0 1px 0 rgba(255,255,255,.22);transform:translateY(-1px)}
+.btn-ghost{color:var(--ink-2);background:var(--surface);border:1px solid var(--line);backdrop-filter:blur(8px)}
+.btn-ghost:hover{background:var(--brand-100);color:var(--brand-800)}
+.avatar-btn{
+  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#eaf0f8;
+  background:linear-gradient(135deg,var(--brand-400),var(--brand-600));
+  box-shadow:0 6px 16px rgba(67,87,122,.28);border:2px solid rgba(255,255,255,.65);
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease);
+}
+.avatar-btn:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(67,87,122,.36)}
+.avatar-btn:active{transform:scale(.94)}
+.avatar-btn svg{width:19px;height:19px}
+
+/* 通知下拉 */
+.notif-panel{
+  position:absolute;top:calc(100% + 12px);right:0;width:320px;border-radius:var(--r-md);
+  background:var(--glass);backdrop-filter:blur(22px) saturate(1.5);-webkit-backdrop-filter:blur(22px) saturate(1.5);
+  border:1px solid var(--line);box-shadow:var(--shadow-lg);padding:8px;z-index:70;
+  opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:.28s var(--ease);
+}
+.notif-panel.open{opacity:1;transform:none;pointer-events:auto}
+.notif-panel .h{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px}
+.notif-panel .h b{font-size:14px}
+.notif-panel .h span{font-size:12px;color:var(--ink-3)}
+.notif-item{display:flex;gap:11px;padding:11px 12px;border-radius:12px;transition:background .2s var(--ease)}
+.notif-item:hover{background:var(--brand-50)}
+.notif-item .ic{width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:var(--brand-100);display:grid;place-items:center;color:var(--brand-700)}
+.notif-item .ic svg{width:17px;height:17px}
+.notif-item .tx b{font-size:13px;font-weight:600;display:block}
+.notif-item .tx p{font-size:12px;color:var(--ink-3);line-height:1.45}
+
+/* 登录弹窗 */
+.modal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;
+  opacity:0;pointer-events:none;transition:opacity .3s var(--ease)}
+.modal.open{opacity:1;pointer-events:auto}
+.modal .mask{position:absolute;inset:0;background:rgba(37,48,63,.36);backdrop-filter:blur(8px)}
+.modal .card{
+  position:relative;width:100%;max-width:400px;border-radius:var(--r-lg);padding:32px;
+  background:rgba(249,250,253,.92);backdrop-filter:blur(24px);border:1px solid var(--line);
+  box-shadow:var(--shadow-lg);transform:translateY(16px) scale(.97);transition:transform .35s var(--ease-spring);
+}
+.modal.open .card{transform:none}
+.modal .close{position:absolute;top:16px;right:16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.field input{
+  width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.7);
+  font-size:14px;transition:border .2s var(--ease),box-shadow .2s var(--ease);outline:none;
+}
+.field input:focus{border-color:var(--brand-400);box-shadow:0 0 0 4px rgba(104,133,172,.14)}
+
+/* ============================================================
+   5. 主内容布局
+   ============================================================ */
+.main{margin-left:0;padding-top:calc(var(--header-h) + 30px);min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(20px,4vw,52px)}
+section{padding:clamp(64px,8vw,110px) 0;position:relative;scroll-margin-top:calc(var(--header-h) + 40px)}
+section:not(.active){display:none}
+section.active{display:block}
+#home{padding:0}
+
+/* ============================================================
+   7. 通用小节样式
+   ============================================================ */
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--brand-600);background:var(--brand-100);padding:6px 14px;border-radius:99px}
+.eyebrow::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand-500)}
+.section-head{margin-bottom:clamp(28px,4vw,46px)}
+.section-head h2{font-size:clamp(28px,4.4vw,44px);line-height:1.16;margin-top:16px;color:var(--ink)}
+.section-head h2 em{font-style:normal;color:var(--brand-500)}
+.section-head .lead{max-width:640px;margin-top:14px;color:var(--ink-3);font-size:16px}
+
+/* ============================================================
+   8. HERO
+   ============================================================ */
+.hero{min-height:calc(100vh - var(--header-h) - 30px);display:flex;align-items:center;padding:40px 0 72px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(30px,5vw,64px);align-items:center}
+.hero-copy .eyebrow{margin-bottom:22px}
+.hero-copy h1{font-size:clamp(34px,5.6vw,58px);line-height:1.1;letter-spacing:.005em}
+.hero-copy h1 .grad{background:linear-gradient(120deg,var(--brand-700),var(--brand-400));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-copy .en{font-size:clamp(15px,1.8vw,18px);color:var(--brand-500);margin-top:12px;letter-spacing:.04em;font-weight:500}
+.hero-copy .lead{margin-top:20px;color:var(--ink-2);font-size:16.5px;max-width:520px}
+.hero-cta{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.hero-meta{display:flex;gap:26px;margin-top:38px;flex-wrap:wrap}
+.hero-meta .m{display:flex;align-items:baseline;gap:8px}
+.hero-meta .m b{font-size:24px;color:var(--brand-700);font-family:"Inter",sans-serif;font-weight:700}
+.hero-meta .m span{font-size:13px;color:var(--ink-3)}
+.hero-meta .m b.unit{font-size:13px;color:var(--ink-4);font-weight:600}
+
+/* ECG 展示卡 */
+.ecg-card{
+  position:relative;border-radius:var(--r-lg);padding:18px 18px 14px;
+  background:linear-gradient(160deg,rgba(255,255,255,.72),rgba(239,242,247,.5));
+  border:1px solid var(--line);box-shadow:var(--shadow-lg);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+}
+.ecg-card .head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px}
+.ecg-card .head .t{display:flex;align-items:center;gap:9px}
+.ecg-card .head .t b{font-size:13.5px}
+.ecg-card .live{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--brand-600);font-weight:600}
+.ecg-card .live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(104,133,172,.5);animation:pulse 1.8s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(104,133,172,.5)}70%{box-shadow:0 0 0 8px rgba(104,133,172,0)}100%{box-shadow:0 0 0 0 rgba(104,133,172,0)}}
+.ecg-canvas{width:100%;height:auto;border-radius:12px;background:linear-gradient(180deg,#f6f8fb,#eef2f7);border:1px solid var(--line-soft)}
+.ecg-card .foot{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-3);background:var(--surface-2);
+  border:1px solid var(--line-soft);padding:4px 11px;border-radius:99px}
+.chip svg{width:13px;height:13px;color:var(--brand-500)}
+
+.video-card{display:flex;align-items:center;gap:14px;margin-top:14px;padding:13px 16px;border-radius:16px;
+  background:var(--surface);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
+.video-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:rgba(104,133,172,.3)}
+.video-card .play{width:44px;height:44px;flex:0 0 auto;border-radius:50%;background:linear-gradient(135deg,var(--brand-500),var(--brand-700));
+  display:grid;place-items:center;color:#eaf0f8;box-shadow:0 8px 18px rgba(67,87,122,.32)}
+.video-card .play svg{width:17px;height:17px;margin-left:2px}
+.video-card .vd-tx b{display:block;font-size:14px;color:var(--ink)}
+.video-card .vd-tx p{font-size:12px;color:var(--ink-3);margin-top:2px}
+.video-card .vd-arrow{margin-left:auto;color:var(--ink-4);font-size:17px}
+.hero-note{
+  margin-top:16px;display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--ink-3);
+  background:linear-gradient(135deg,rgba(185,196,216,.18),rgba(185,196,216,.06));border:1px solid rgba(185,196,216,.4);
+  padding:12px 16px;border-radius:14px;line-height:1.55;
+}
+.hero-note svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;color:#8a94a8}
+
+/* ============================================================
+   9. 卡片组件（左图标 / 右标题+描述）
+   ============================================================ */
+.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.card{
+  position:relative;display:flex;gap:16px;align-items:flex-start;padding:24px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  overflow:hidden;transition:transform .35s var(--ease),box-shadow .35s var(--ease),border-color .35s var(--ease);
+}
+.card::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(104,133,172,.08),transparent 60%);
+  opacity:0;transition:opacity .4s var(--ease)}
+.card::after{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--brand-500),var(--brand-300));transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease)}
+.card:hover{transform:translateY(-6px);box-shadow:var(--shadow-glow);border-color:rgba(104,133,172,.3)}
+.card:hover::before{opacity:1}
+.card:hover::after{transform:scaleX(1)}
+.card .card-ic{
+  width:50px;height:50px;flex:0 0 auto;border-radius:14px;display:grid;place-items:center;color:var(--brand-700);
+  background:linear-gradient(135deg,var(--brand-100),var(--brand-50));border:1px solid var(--line-soft);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);transition:transform .4s var(--ease-spring),background .4s var(--ease),color .4s var(--ease);
+}
+.card:hover .card-ic{transform:scale(1.1) rotate(-4deg);background:linear-gradient(135deg,var(--brand-500),var(--brand-700));color:#eaf0f8}
+.card .card-ic svg{width:23px;height:23px}
+.card .card-bd{flex:1;min-width:0}
+.card .card-bd h3{font-family:"Inter","PingFang SC","Microsoft YaHei",sans-serif;font-size:16.5px;font-weight:650;color:var(--ink);letter-spacing:.01em}
+.card .card-bd p{margin-top:6px;font-size:13.5px;color:var(--ink-3);line-height:1.6}
+.card .card-bd .tag{display:inline-block;margin-top:12px;font-size:11px;font-weight:600;color:var(--brand-600);
+  background:var(--brand-100);padding:3px 10px;border-radius:99px}
+.card .go{position:absolute;top:22px;right:20px;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  color:var(--ink-4);opacity:0;transform:translate(-6px,6px);transition:all .35s var(--ease)}
+.card:hover .go{opacity:1;transform:none;color:var(--brand-700);background:var(--brand-50)}
+
+/* ============================================================
+   10. 分析页
+   ============================================================ */
+.analysis-shell{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
+.panel{
+  border-radius:var(--r-lg);padding:26px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-md);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.panel .ph{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.panel .ph .ic{width:36px;height:36px;border-radius:11px;background:var(--brand-100);color:var(--brand-700);display:grid;place-items:center}
+.panel .ph .ic svg{width:18px;height:18px}
+.panel .ph b{font-size:16px}
+.panel .ph .badge{margin-left:auto;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px}
+
+.dropzone{
+  border:1.5px dashed var(--brand-300);border-radius:16px;padding:34px 20px;text-align:center;cursor:pointer;
+  transition:border-color .25s var(--ease),background .25s var(--ease);position:relative;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--brand-500);background:var(--brand-50)}
+.dropzone svg{width:34px;height:34px;margin:0 auto 10px;color:var(--brand-500)}
+.dropzone b{display:block;font-size:14.5px;color:var(--ink)}
+.dropzone p{font-size:12.5px;color:var(--ink-3);margin-top:4px}
+.dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.file-chip{display:none;align-items:center;gap:10px;margin-top:14px;padding:10px 14px;border-radius:12px;background:var(--brand-50);border:1px solid var(--line-soft)}
+.file-chip.show{display:flex}
+.file-chip .nm{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-chip .sz{font-size:11.5px;color:var(--ink-3)}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.param select{width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.7);font-size:13.5px;outline:none}
+.param select:focus{border-color:var(--brand-400)}
+
+/* 连接状态 */
+.conn{display:flex;align-items:center;gap:9px;padding:11px 14px;border-radius:12px;font-size:13px;margin-top:16px;border:1px solid var(--line-soft)}
+.conn .state{width:9px;height:9px;border-radius:50%;background:var(--ink-4)}
+.conn.online .state{background:var(--ok);box-shadow:0 0 0 0 rgba(104,133,172,.6);animation:pulse 1.8s infinite}
+.conn.offline .state{background:var(--sand)}
+.conn b{font-weight:650}
+.conn span{color:var(--ink-3)}
+.conn .try{margin-left:auto;font-size:12px;color:var(--brand-600);font-weight:600}
+
+.run-btn{width:100%;margin-top:16px;padding:14px;font-size:15px;border-radius:14px}
+
+/* 结果面板 */
+.result-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:320px;color:var(--ink-4)}
+.result-placeholder svg{width:52px;height:52px;color:var(--brand-300);margin-bottom:14px}
+.result-placeholder b{font-size:15px;color:var(--ink-3)}
+.result-placeholder p{font-size:12.5px;margin-top:4px;max-width:280px}
+.result-body{display:none}
+.result-body.show{display:block}
+.result-banner{display:flex;gap:9px;align-items:flex-start;font-size:12px;padding:10px 14px;border-radius:12px;margin-bottom:16px;line-height:1.5}
+.result-banner.warn{background:rgba(185,196,216,.16);border:1px solid rgba(185,196,216,.5);color:#6b7488}
+.result-banner.ok{background:rgba(104,133,172,.12);border:1px solid rgba(104,133,172,.35);color:var(--brand-800)}
+.result-banner svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px}
+.diag-head{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.diag-head .verdict{font-size:22px;color:var(--ink)}
+.diag-head .conf{margin-left:auto;text-align:right}
+.diag-head .conf b{font-size:24px;color:var(--brand-600);font-family:"Inter",sans-serif}
+.diag-head .conf span{display:block;font-size:11px;color:var(--ink-3)}
+.bar-row{margin-bottom:13px}
+.bar-row .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:5px}
+.bar-row .top b{font-weight:650;color:var(--ink-2)}
+.bar-row .top span{font-family:"Inter",sans-serif;font-weight:600;color:var(--ink-3)}
+.bar{height:8px;border-radius:99px;background:var(--brand-100);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand-400),var(--brand-600));width:0;transition:width 1s var(--ease)}
+
+/* ============================================================
+   11. 结果页（benchmark）
+   ============================================================ */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px}
+.stat-card{border-radius:var(--r-md);padding:22px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);backdrop-filter:blur(12px);position:relative;overflow:hidden}
+.stat-card::after{content:"";position:absolute;right:-30px;top:-30px;width:110px;height:110px;border-radius:50%;
+  background:radial-gradient(circle,rgba(104,133,172,.16),transparent 70%)}
+.stat-card .k{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.stat-card .v{font-size:34px;font-weight:700;font-family:"Inter",sans-serif;color:var(--brand-700);margin-top:6px;line-height:1}
+.stat-card .v small{font-size:15px;font-weight:600;color:var(--ink-4)}
+.stat-card .d{font-size:12px;color:var(--ink-3);margin-top:8px}
+
+.chart-panel{border-radius:var(--r-lg);padding:24px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-md);backdrop-filter:blur(12px)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.tab{padding:8px 16px;border-radius:99px;font-size:13px;font-weight:600;color:var(--ink-2);background:transparent;border:1px solid transparent;transition:all .25s var(--ease)}
+.tab:hover{color:var(--brand-800)}
+.tab.active{color:var(--brand-900);background:var(--brand-100);border-color:var(--line)}
+.bars{display:flex;flex-direction:column;gap:13px}
+.bars .row{display:grid;grid-template-columns:150px 1fr 62px;gap:14px;align-items:center}
+.bars .row .nm{font-size:13px;font-weight:550;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bars .row .nm.me{color:var(--brand-800);font-weight:700}
+.bars .track{height:26px;background:var(--brand-50);border-radius:8px;position:relative;overflow:hidden}
+.bars .fill{position:absolute;inset:0;width:0;border-radius:8px;transition:width 1.1s var(--ease);
+  background:linear-gradient(90deg,var(--brand-300),var(--brand-500))}
+.bars .row.me .fill{background:linear-gradient(90deg,var(--brand-500),var(--brand-700));box-shadow:0 4px 14px rgba(67,87,122,.3)}
+.bars .row .val{font-size:13px;font-family:"Inter",sans-serif;font-weight:650;text-align:right;color:var(--ink-2)}
+.bars .row.me .val{color:var(--brand-700)}
+.bars .row .fill-txt{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11.5px;font-family:"Inter",sans-serif;font-weight:600;color:rgba(255,255,255,.95);opacity:0;transition:opacity .3s}
+.bars .row.me .fill-txt{opacity:1}
+
+.chart-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:22px;margin-top:22px}
+.radar-box{position:relative;width:100%;max-width:340px;margin:0 auto}
+.radar-box svg{width:100%;height:auto}
+.legend{display:flex;gap:16px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
+.legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.table-wrap{overflow-x:auto;margin-top:22px;border-radius:16px;border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+thead th{background:var(--brand-100);color:var(--brand-800);font-weight:650;text-align:left;padding:12px 16px;white-space:nowrap;font-size:12.5px}
+tbody td{padding:11px 16px;border-top:1px solid var(--line-soft);color:var(--ink-2);white-space:nowrap}
+tbody tr:hover td{background:var(--brand-50)}
+tbody td.me{font-weight:700;color:var(--brand-700);background:var(--brand-50)}
+tbody td.num{font-family:"Inter",sans-serif;font-weight:600}
+.badge-best{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--brand-500);padding:2px 8px;border-radius:99px;margin-left:6px}
+
+/* ============================================================
+   12. ABOUT
+   ============================================================ */
+.about-lead{max-width:820px;color:var(--ink-2);font-size:16.5px}
+.about-lead b{color:var(--brand-700)}
+.diff-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+.diff{position:relative;padding:26px 24px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);backdrop-filter:blur(12px);overflow:hidden;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.diff:hover{transform:translateY(-5px);box-shadow:var(--shadow-glow)}
+.diff .no{font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--brand-400);font-family:"Inter",sans-serif}
+.diff h3{margin-top:10px;font-size:17px;color:var(--ink)}
+.diff p{margin-top:9px;font-size:13.5px;color:var(--ink-3);line-height:1.65}
+.diff .vs{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:11.5px;font-weight:600;color:var(--brand-600);
+  background:var(--brand-50);border:1px solid var(--line-soft);padding:4px 11px;border-radius:99px}
+
+/* 流程图 */
+.flow{margin-top:44px}
+.flow-title{display:flex;align-items:center;gap:12px;margin-bottom:26px}
+.flow-title .ic{width:38px;height:38px;border-radius:12px;background:var(--brand-100);color:var(--brand-700);display:grid;place-items:center}
+.flow-title .ic svg{width:19px;height:19px}
+.flow-title b{font-size:19px}
+.flow-title span{font-size:13px;color:var(--ink-3)}
+.flow-track{display:grid;grid-template-columns:repeat(5,1fr);gap:0;align-items:stretch}
+.flow-step{position:relative;padding:22px 18px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);backdrop-filter:blur(10px);transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.flow-step:hover{transform:translateY(-5px);box-shadow:var(--shadow-glow)}
+.flow-step .st{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--brand-500),var(--brand-700));
+  color:#eaf0f8;display:grid;place-items:center;font-size:13px;font-weight:700;font-family:"Inter",sans-serif;margin-bottom:14px;
+  box-shadow:0 5px 14px rgba(67,87,122,.3)}
+.flow-step h4{font-size:14.5px;color:var(--ink);line-height:1.4}
+.flow-step p{font-size:12px;color:var(--ink-3);margin-top:7px;line-height:1.55}
+.flow-arrow{position:absolute;top:50%;right:-14px;width:28px;height:28px;transform:translateY(-50%);z-index:2;
+  background:var(--brand-100);border:1px solid var(--line);border-radius:50%;display:grid;place-items:center;color:var(--brand-700)}
+.flow-arrow svg{width:14px;height:14px}
+
+/* 团队 */
+.team{margin-top:40px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.team .lbl{font-size:12px;font-weight:700;letter-spacing:.12em;color:var(--ink-4);text-transform:uppercase}
+.pill{font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);padding:6px 13px;border-radius:99px}
+
+/* ============================================================
+   12b. 历史记录
+   ============================================================ */
+.history-toolbar{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.history-toolbar .spacer{flex:1}
+.history-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:70px 20px;
+  border:1.5px dashed var(--brand-300);border-radius:var(--r-lg);color:var(--ink-4)}
+.history-empty svg{width:46px;height:46px;color:var(--brand-300);margin-bottom:14px}
+.history-empty b{font-size:15px;color:var(--ink-3)}
+.history-empty p{font-size:12.5px;margin-top:6px;max-width:340px}
+.history-empty .btn{margin-top:18px}
+
+.rec-list{display:flex;flex-direction:column;gap:16px}
+.rec-card{border-radius:var(--r-md);padding:22px 24px;background:var(--surface);border:1px solid var(--line);
+  box-shadow:var(--shadow-sm);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.rec-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.rec-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.rec-head .nm{font-size:15px;font-weight:650;color:var(--ink)}
+.rec-head .time{font-size:12px;color:var(--ink-4);font-family:"Inter",sans-serif}
+.rec-head .verdict-badge{margin-left:auto;font-size:12px;font-weight:700;color:#fff;
+  background:linear-gradient(135deg,var(--brand-500),var(--brand-700));padding:5px 13px;border-radius:99px;
+  box-shadow:0 5px 14px rgba(67,87,122,.3)}
+.rec-meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0}
+.rec-meta .m{background:var(--brand-50);border:1px solid var(--line-soft);border-radius:12px;padding:10px 14px}
+.rec-meta .m .k{font-size:11px;color:var(--ink-3);letter-spacing:.04em}
+.rec-meta .m .v{font-size:16px;font-weight:700;color:var(--brand-700);font-family:"Inter",sans-serif;margin-top:2px}
+.rec-bars{display:flex;flex-wrap:wrap;gap:8px}
+.rec-bars .chip2{font-size:11.5px;padding:4px 11px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line-soft);color:var(--ink-3)}
+.rec-bars .chip2.hot{color:var(--brand-700);background:var(--brand-100);border-color:var(--brand-200);font-weight:700}
+.rec-actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+.rec-actions .btn{padding:8px 16px;font-size:13px}
+
+/* ============================================================
+   12c. 模型框架图（About us）
+   ============================================================ */
+.arch{margin-top:44px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:clamp(20px,3vw,36px);box-shadow:var(--shadow-md);backdrop-filter:blur(12px)}
+.arch .arch-title{display:flex;align-items:center;gap:12px;margin-bottom:22px}
+.arch .arch-title .ic{width:38px;height:38px;border-radius:12px;background:var(--brand-100);color:var(--brand-700);display:grid;place-items:center}
+.arch .arch-title .ic svg{width:19px;height:19px}
+.arch .arch-title b{font-size:19px}
+.arch .arch-title span{font-size:13px;color:var(--ink-3)}
+.arch-flow{display:flex;flex-direction:column;align-items:center;gap:0}
+.arch-box{width:min(620px,100%);text-align:center;padding:14px 20px;border-radius:14px;font-size:13.5px;line-height:1.5;
+  background:var(--brand-50);border:1px solid var(--brand-200);color:var(--ink-2);position:relative}
+.arch-box b{display:block;font-size:14px;color:var(--brand-800);margin-bottom:3px}
+.arch-box small{color:var(--ink-3);font-size:12px}
+.arch-box.in{background:linear-gradient(135deg,var(--brand-500),var(--brand-700));color:#f5f7fb;border-color:transparent;
+  box-shadow:0 10px 26px rgba(67,87,122,.3)}
+.arch-box.in b{color:#fff}
+.arch-box.in small{color:rgba(255,255,255,.82)}
+.arch-box.fusion{background:var(--brand-100);border-color:var(--brand-300)}
+.arch-arrow{display:flex;flex-direction:column;align-items:center;color:var(--brand-400);padding:4px 0;line-height:1}
+.arch-arrow svg{width:16px;height:16px}
+.arch-split{width:min(680px,100%);display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.arch-split .arch-box{width:100%;min-height:78px;display:flex;flex-direction:column;justify-content:center}
+.arch-side{width:min(620px,100%);display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.arch-side .tag{font-size:11.5px;color:var(--brand-600);background:var(--brand-50);border:1px dashed var(--brand-300);padding:6px 14px;border-radius:99px}
+@media (max-width:620px){
+  .arch-split{grid-template-columns:1fr}
+  .rec-meta{grid-template-columns:1fr 1fr}
+}
+
+/* ============================================================
+   12d. 页面增强组件（规格 / 步骤 / 场景）
+   ============================================================ */
+.spec-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+.spec{background:var(--brand-50);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.spec .k{font-size:11px;color:var(--ink-3);letter-spacing:.03em}
+.spec .v{font-size:16px;font-weight:700;color:var(--brand-700);font-family:"Inter",sans-serif;margin-top:3px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:26px}
+.step{display:flex;gap:12px;align-items:flex-start;padding:18px;border-radius:16px;background:var(--surface);
+  border:1px solid var(--line);box-shadow:var(--shadow-sm);backdrop-filter:blur(12px)}
+.step .no{width:30px;height:30px;flex:0 0 auto;border-radius:10px;background:linear-gradient(135deg,var(--brand-500),var(--brand-700));
+  color:#f5f7fb;display:grid;place-items:center;font-size:13px;font-weight:700;font-family:"Inter",sans-serif}
+.step b{font-size:14px;color:var(--ink);display:block}
+.step p{font-size:12.5px;color:var(--ink-3);margin-top:4px;line-height:1.55}
+.scenario-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.scenario{padding:22px;border-radius:var(--r-md);background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-sm);backdrop-filter:blur(12px)}
+.scenario .sc-ic{width:42px;height:42px;border-radius:12px;background:var(--brand-100);color:var(--brand-700);display:grid;place-items:center;margin-bottom:14px}
+.scenario .sc-ic svg{width:20px;height:20px}
+.scenario b{font-size:15px;color:var(--ink)}
+.scenario p{font-size:13px;color:var(--ink-3);margin-top:7px;line-height:1.6}
+.req-note{display:flex;gap:10px;align-items:flex-start;margin-top:16px;font-size:12.5px;color:var(--ink-3);line-height:1.6;
+  background:var(--brand-50);border:1px solid var(--line-soft);padding:13px 16px;border-radius:14px}
+.req-note svg{width:16px;height:16px;flex:0 0 auto;margin-top:2px;color:var(--brand-500)}
+.home-more{padding-bottom:clamp(64px,8vw,110px)}
+.home-block{margin-top:clamp(48px,7vw,84px)}
+.video-feature{padding:20px;border-radius:var(--r-lg);background:linear-gradient(135deg,var(--brand-50),var(--surface));
+  border:1px solid var(--brand-200);box-shadow:var(--shadow-md);backdrop-filter:blur(12px);transition:transform .3s var(--ease),box-shadow .3s var(--ease)}
+.video-feature:hover{transform:translateY(-4px);box-shadow:var(--shadow-glow)}
+.vf-player{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:var(--brand-100)}
+.vf-player video{width:100%;height:100%;display:block;object-fit:cover;background:var(--brand-100)}
+.video-feature .vf-body b{font-size:18px;color:var(--ink);display:block;margin-top:16px}
+.video-feature .vf-body p{font-size:13.5px;color:var(--ink-3);margin-top:6px;line-height:1.6}
+.video-feature .vf-body .tag{display:inline-block;margin-top:12px;font-size:11.5px;font-weight:600;color:var(--brand-600);background:var(--brand-100);padding:4px 12px;border-radius:99px}
+@media (max-width:900px){ .spec-grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:760px){ .steps{grid-template-columns:1fr} .scenario-grid{grid-template-columns:1fr} }
+
+/* ============================================================
+   13. FOOTER
+   ============================================================ */
+footer{border-top:1px solid var(--line-soft);padding:44px 0 30px;margin-top:20px;background:linear-gradient(180deg,transparent,rgba(104,133,172,.06))}
+.foot-grid{display:flex;flex-wrap:wrap;gap:28px;justify-content:space-between;align-items:flex-start}
+.foot-grid .brand{display:flex;gap:12px;align-items:center}
+.foot-grid .brand p{font-size:12.5px;color:var(--ink-3);max-width:300px;margin-top:8px}
+.foot-col b{display:block;font-size:13px;margin-bottom:10px;color:var(--ink)}
+.foot-col a{display:block;font-size:12.5px;color:var(--ink-3);padding:3px 0;transition:color .2s}
+.foot-col a:hover{color:var(--brand-700)}
+.foot-bottom{margin-top:30px;padding-top:20px;border-top:1px solid var(--line-soft);display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;font-size:12px;color:var(--ink-4)}
+
+/* ============================================================
+   14. 动效
+   ============================================================ */
+html.js .reveal{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+html.js .reveal.in{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+/* ============================================================
+   15. 响应式
+   ============================================================ */
+@media (max-width:1080px){
+  .hero-grid{grid-template-columns:1fr}
+  .analysis-shell{grid-template-columns:1fr}
+  .diff-grid{grid-template-columns:repeat(2,1fr)}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .flow-track{grid-template-columns:1fr;gap:12px}
+  .flow-arrow{display:none}
+  .chart-grid{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .topbar .topnav{display:none}
+  .topbar .topnav.open{
+    display:flex;flex-direction:column;position:absolute;top:calc(100% + 10px);left:12px;right:12px;gap:2px;
+    background:rgba(249,250,253,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow-lg);padding:8px;
+  }
+  .topbar .topnav.open a{width:100%;text-align:center;padding:12px;border-radius:11px}
+  .topbar .topnav.open a::after{display:none}
+  .topbar .topnav.open a:hover{background:var(--brand-100)}
+  .topbar .topnav.open a.active{background:var(--brand-100)}
+  .mobile-hamburger{display:grid}
+}
+@media (max-width:760px){
+  .cards-grid{grid-template-columns:1fr}
+  .diff-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr}
+  .bars .row{grid-template-columns:110px 1fr 56px;gap:9px}
+  .hero-copy h1{font-size:34px}
+  .brand-name .sub{display:none}
+}
+@media (max-width:620px){
+  .main{margin-left:0}
+  .stat-grid{grid-template-columns:1fr}
+}
+.mobile-hamburger{display:none;width:40px;height:40px;border-radius:12px;place-items:center;color:var(--ink-2)}
+.mobile-hamburger:hover{background:var(--brand-100)}
+</style>
+<script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+
+<!-- 背景 -->
+<div class="bg-wash" aria-hidden="true">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div>
+</div>
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ============ 顶栏 ============ -->
+<header class="topbar" id="topbar">
+  <button class="mobile-hamburger" id="mobileHamburger" aria-label="菜单">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+  <a class="brand" href="#home" data-nav="home">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#eaf0f8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/></svg>
+    </span>
+    <span class="brand-name">心域智能<span class="sub">DEFT · Cardiac Intelligence</span></span>
+  </a>
+  <nav class="topnav" id="topnav">
+    <a href="#home" data-nav="home">首页</a>
+    <a href="#features" data-nav="features">功能页</a>
+    <a href="#analysis" data-nav="analysis">智能分析</a>
+    <a href="#history" data-nav="history">历史记录</a>
+    <a href="#about" data-nav="about">About us</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="actions">
+    <div style="position:relative">
+      <button class="icon-btn" id="notifBtn" aria-label="消息通知">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="dot">3</span>
+      </button>
+      <div class="notif-panel" id="notifPanel">
+        <div class="h"><b>消息通知</b><span>3 条未读</span></div>
+        <div class="notif-item">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+          <span class="tx"><b>分析任务完成</b><p>样本 #ECG-2048 已完成推理，结论：窦性心律。</p></span>
+        </div>
+        <div class="notif-item">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
+          <span class="tx"><b>模型已更新</b><p>DEFT 权重 v1.4.0 已部署，AUROC 提升 0.31%。</p></span>
+        </div>
+        <div class="notif-item">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 8v4M12 16h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
+          <span class="tx"><b>数据隐私提醒</b><p>请勿上传含患者身份信息的原始数据。</p></span>
+        </div>
+      </div>
+    </div>
+    <button class="avatar-btn" id="loginBtn" aria-label="登录账号">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ============ 主内容 ============ -->
+<main class="main" id="main">
+
+  <!-- HOME -->
+  <section id="home">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow reveal">AI 医学辅助决策 · 双域融合 Transformer</span>
+            <h1 class="reveal d1">心域智能<br><span class="grad">心电辅助平台</span></h1>
+            <p class="en reveal d2">Dual-Domain Multi-resolution Fusion Transformer</p>
+            <p class="lead reveal d3">DEFT 以「双域 · 多分辨率」重构非平稳心电信号分析——让波形形态与频谱演化在同一坐标系下严格对齐、协同对话，为临床提供透明、可解释、稳健的智能辅助。</p>
+            <div class="hero-cta reveal d4">
+              <a class="btn btn-primary" href="#analysis">
+                开始智能分析
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </a>
+              <a class="btn btn-ghost" href="#about">了解我们的方法</a>
+            </div>
+            <div class="hero-meta reveal d4">
+              <div class="m"><b>90.15</b><span>PTB-XL<br>AUROC</span></div>
+              <div class="m"><b>9.5</b><b class="unit">M</b><span>参数量</span></div>
+              <div class="m"><b>2.8</b><b class="unit">G</b><span>FLOPs</span></div>
+              <div class="m"><b>6</b><span>临床数据集<br>验证</span></div>
+            </div>
+          </div>
+
+          <div class="reveal d2">
+            <div class="ecg-card">
+              <div class="head">
+                <div class="t">
+                  <span class="live">实时模拟</span>
+                  <b>动态虚拟十二导联</b>
+                </div>
+                <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>12-lead</span>
+              </div>
+              <canvas id="ecgCanvas" class="ecg-canvas" width="640" height="400"></canvas>
+              <div class="foot">
+                <span class="chip">I · II · III</span>
+                <span class="chip">aVR · aVL · aVF</span>
+                <span class="chip">V1–V6</span>
+                <a class="chip" href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener" style="margin-left:auto;color:var(--brand-600)">
+                  数据来源 PhysioNet ↗
+                </a>
+              </div>
+            </div>
+            <div class="hero-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span>本平台输出仅供<b>辅助参考</b>，不作为真实临床诊断与用药依据；请在专业医师指导下解读结果。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 首页下方内容 -->
+    <div class="wrap home-more">
+      <div class="home-block reveal">
+        <div class="section-head" style="margin-bottom:28px">
+          <span class="eyebrow">核心能力 · Highlights</span>
+          <h2>一次上传，<em>九类秒判</em></h2>
+          <p class="lead">DEFT 把临床医师「看波形 + 看节律」的双重视角沉淀为智能能力，覆盖最常见的心律失常类型。</p>
+        </div>
+        <div class="scenario-grid">
+          <div class="scenario">
+            <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><path d="M3 18h4l2-6 4 12 4-8 2 2h3" opacity=".45"/></svg></span>
+            <b>双域融合建模</b>
+            <p>时域波形与多分辨率频谱在同一 patch 网格上严格对齐、协同建模。</p>
+          </div>
+          <div class="scenario">
+            <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg></span>
+            <b>九类心律失常识别</b>
+            <p>正常 / 房颤 / 房室阻滞 / 束支阻滞 / 早搏 / ST 段改变，多标签同时预测。</p>
+          </div>
+          <div class="scenario">
+            <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
+            <b>可解释注意力</b>
+            <p>能量—注意力一致性引导模型聚焦临床相关瞬态，定位可疑波形片段。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-block reveal">
+        <div class="section-head" style="margin-bottom:28px">
+          <span class="eyebrow">科普 · Education</span>
+          <h2>心脏疾病<em>科普视频</em></h2>
+          <p class="lead">向下滑动到此——用 3 分钟快速理解心电图与心律失常，为读懂分析报告打好基础。</p>
+        </div>
+        <div class="video-feature">
+          <div class="vf-player">
+            <!-- 开源科普动画（Wikimedia Commons · CC 授权）· 页内直接展示。
+                 如需替换为自己的科普视频，把下面 <img> 换成：
+                 <video controls poster="..."><source src="你的视频.mp4" type="video/mp4"></video> -->
+            <img src="https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20Principle%20fast.gif"
+                 alt="心电原理科普动画"
+                 style="width:100%;height:100%;object-fit:cover;display:block"
+                 onerror="this.onerror=null;this.src='https://commons.wikimedia.org/wiki/Special:FilePath/ECG%20principle%20slow.gif';">
+          </div>
+          <div class="vf-body">
+            <b>心电原理科普动画</b>
+            <p>从 P-QRS-T 波形到房颤、早搏、传导阻滞，一图一解、通俗易懂。开源动画在页内直接展示，无需跳转外站。</p>
+            <span class="tag">开源素材 · Wikimedia Commons</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-block reveal">
+        <div class="section-head" style="margin-bottom:28px">
+          <span class="eyebrow">三步上手 · Get Started</span>
+          <h2>三步，<em>完成一次分析</em></h2>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <span class="no">1</span>
+            <div><b>上传心电数据</b><p>拖入或选择 12 导联文件（.npy / .npz / .pt / .csv / .mat）。</p></div>
+          </div>
+          <div class="step">
+            <span class="no">2</span>
+            <div><b>运行模型分析</b><p>点击「运行分析」，DEFT 秒级返回九类心律失常预测。</p></div>
+          </div>
+          <div class="step">
+            <span class="no">3</span>
+            <div><b>查看并导出报告</b><p>查看结论与置信度，一键导出分析报告，记录自动存档。</p></div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:30px">
+          <a class="btn btn-primary" href="#analysis" style="padding:14px 34px;font-size:15px">
+            立即开始智能分析
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">功能页 · Features</span>
+        <h2>一项技术，<em>八重能力</em></h2>
+        <p class="lead">从双域融合建模到可解释注意力，DEFT 将临床医师的「看波形 + 看节律」双重视角，沉淀为可复用的智能分析能力。</p>
+      </div>
+      <div class="cards-grid">
+        <a class="card reveal" href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><path d="M3 18h4l2-6 4 12 4-8 2 2h3" opacity=".45"/></svg></span>
+          <span class="card-bd">
+            <h3>双域融合建模</h3>
+            <p>时域波形与多分辨率频谱证据在同一 patch 网格上严格对齐，协同建模，而非单一视角各自为战。</p>
+            <span class="tag">Dual-domain</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="https://physionet.org/content/mimic-iv-ecg/1.0/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h4l3-8 3 12 3-8 3 4h0"/><path d="M3 20h18" opacity=".5"/></svg></span>
+          <span class="card-bd">
+            <h3>多分辨率小波分解</h3>
+            <p>db4 离散小波 J=4 层，提取局部能量、尺度比与跨导联同步性三类生理可解释描述符。</p>
+            <span class="tag">MRA · db4</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="https://physionet.org/content/ecg-arrhythmia/1.0.0/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
+          <span class="card-bd">
+            <h3>交互式注意力可解释</h3>
+            <p>能量—注意力一致性约束，引导模型聚焦临床相关的瞬态异常区，注意力可视化对齐专家判断。</p>
+            <span class="tag">Interpretability</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="https://moody-challenge.physionet.org/2021/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="card-bd">
+            <h3>抗噪与导联鲁棒</h3>
+            <p>测试期注入临床噪声与随机导联缺失，DEFT 仍保持最平缓的性能衰减，稳健性显著优于基线。</p>
+            <span class="tag">Robustness</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="https://www.physionet.org/content/ptbdb/1.0.0/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0M3 12a9 9 0 0 1 18 0"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>
+          <span class="card-bd">
+            <h3>跨源零样本泛化</h3>
+            <p>在 PTB-XL / CPSC2018 / CSN 队列间直接迁移评估，DEFT 平均退化最小，跨源迁移更稳定。</p>
+            <span class="tag">Generalization</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="https://physionet.org/content/mimic-iv-ecg/1.0/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16M9 4v16"/><path d="M12 9v6M14.5 9v6M12 12h3"/></svg></span>
+          <span class="card-bd">
+            <h3>掩码自监督预训练</h3>
+            <p>在 MIMIC-IV-ECG 大规模无标注语料上以随机 + 结构化掩码重建预训练，显著提升小样本下游表现。</p>
+            <span class="tag">Self-supervised</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9 22l8.5-11.5H12L13 2z"/></svg></span>
+          <span class="card-bd">
+            <h3>轻量高效架构</h3>
+            <p>约 9.5M 参数 / 2.8 GFLOPs，落于精度—成本帕累托前沿，优于更重的分解式基线。</p>
+            <span class="tag">9.5M · 2.8G</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="https://isip.piconepress.com/projects/tuh_eeg/" target="_blank" rel="noopener">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M7 15c1.5-3 2.5-3 4 0s2.5 3 4 0 2.5-3 4 0" opacity=".8"/></svg></span>
+          <span class="card-bd">
+            <h3>多模态扩展能力</h3>
+            <p>统一双域框架覆盖 ECG 与 EEG，癫痫事件定位指向准确率 100%，可扩展至更广临床模态。</p>
+            <span class="tag">ECG + EEG</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+      </div>
+
+      <div class="arch reveal" style="margin-top:40px">
+        <div class="arch-title" style="margin-bottom:16px">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg></span>
+          <div><b>技术规格</b><br><span>Technical Specifications · DEFT 模型配置</span></div>
+        </div>
+        <div class="spec-grid">
+          <div class="spec"><div class="k">小波基</div><div class="v">db4</div></div>
+          <div class="spec"><div class="k">MRA 层数</div><div class="v">J = 4</div></div>
+          <div class="spec"><div class="k">Patch 大小 / 步长</div><div class="v">16 / 16</div></div>
+          <div class="spec"><div class="k">模型宽度</div><div class="v">256</div></div>
+          <div class="spec"><div class="k">编码器层数</div><div class="v">4 × 2 流</div></div>
+          <div class="spec"><div class="k">注意力头数</div><div class="v">8</div></div>
+          <div class="spec"><div class="k">参数量</div><div class="v">≈ 9.5M</div></div>
+          <div class="spec"><div class="k">计算量</div><div class="v">2.8 G</div></div>
+        </div>
+      </div>
+
+      <div class="scenario-grid reveal">
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>
+          <b>远程心电筛查</b>
+          <p>面向基层与远程医疗场景，秒级返回九类心律失常预测，辅助大规模人群的初步分诊。</p>
+        </div>
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><rect x="2" y="4" width="20" height="16" rx="3" opacity=".4"/></svg></span>
+          <b>门诊辅助诊断</b>
+          <p>为心内科门诊提供可解释的注意力定位，帮助医师快速锁定可疑波形片段，提升读图效率。</p>
+        </div>
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a4 4 0 0 1 4 4M12 4a4 4 0 0 0-4 4M4 12h16M8 20h8M12 8v12"/></svg></span>
+          <b>可穿戴与科研</b>
+          <p>轻量架构（9.5M 参数）适配可穿戴设备与临床科研，支持 ECG / EEG 多模态统一扩展。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANALYSIS -->
+  <section id="analysis">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">智能分析 · Analysis</span>
+        <h2>上传心电，<em>即刻解读</em></h2>
+        <p class="lead">上传 12 导联心电数据（.npy / .npz / .pt / .csv / .mat，100 Hz · 10 秒），接入 DEFT 模型完成 <b>CPSC2018 九类心律失常</b> 的多标签预测。</p>
+      </div>
+
+      <div class="steps reveal">
+        <div class="step">
+          <span class="no">1</span>
+          <div><b>上传心电数据</b><p>拖入或选择 12 导联文件（.npy / .npz / .pt / .csv / .mat）。</p></div>
+        </div>
+        <div class="step">
+          <span class="no">2</span>
+          <div><b>确认参数并运行</b><p>核对导联数与采样率，点击「运行分析」调用 DEFT 模型。</p></div>
+        </div>
+        <div class="step">
+          <span class="no">3</span>
+          <div><b>查看并导出报告</b><p>查看九类概率与结论，导出分析报告，记录自动存入历史。</p></div>
+        </div>
+      </div>
+
+      <div class="req-note reveal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 12v4"/></svg>
+        <span><b style="color:var(--ink-2)">数据要求：</b>12 导联 · 100 Hz · 约 10 秒，数组形状 [C×T]（如 12×1000）的 float32。模型按 CPSC2018 标准以 100 Hz 重采样训练，请上传重采样后的数据；预测覆盖九类心律失常（正常 / 房颤 / 房室阻滞 / 束支阻滞 / 早搏 / ST 段改变）。</span>
+      </div>
+
+      <div class="analysis-shell">
+        <!-- 左侧：输入配置 -->
+        <div class="panel reveal">
+          <div class="ph">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></span>
+            <b>输入数据</b>
+            <span class="badge" style="color:var(--brand-600);background:var(--brand-100)">12 导联</span>
+          </div>
+          <div class="dropzone" id="dropzone">
+            <input type="file" id="fileInput" accept=".npy,.npz,.pt,.pth,.csv,.mat,.txt" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            <b>拖拽文件到此处，或点击选择</b>
+            <p>支持 [C×T] 的 .npy / .npz / .pt / .pth / .csv / .mat</p>
+          </div>
+          <div class="file-chip" id="fileChip">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+            <span class="nm" id="fileName">—</span>
+            <span class="sz" id="fileSize"></span>
+          </div>
+
+          <div class="form-grid">
+            <div class="param">
+              <label class="field-label" style="font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px">导联数</label>
+              <select id="numLeads">
+                <option value="12" selected>12 导联 (standard)</option>
+                <option value="2">2 导联</option>
+                <option value="6">6 导联</option>
+                <option value="8">8 导联</option>
+              </select>
+            </div>
+            <div class="param">
+              <label style="font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px">采样率 (Hz)</label>
+              <select id="samplingRate">
+                <option value="100" selected>100（CPSC2018 重采样）</option>
+                <option value="250">250</option>
+                <option value="500">500</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="conn offline" id="connStatus">
+            <span class="state"></span>
+            <b id="connLabel">未连接后端模型</b>
+            <span id="connHint">将使用浏览器内演示模式</span>
+            <button class="try" id="retryConn">重试</button>
+          </div>
+
+          <button class="btn btn-primary run-btn" id="runBtn">
+            运行分析
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+
+        <!-- 右侧：结果 -->
+        <div class="panel reveal d1">
+          <div class="ph">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+            <b>分析结果</b>
+            <span class="badge" id="modeBadge" style="color:var(--sand);background:rgba(185,196,216,.2)">演示模式</span>
+          </div>
+
+          <div class="result-placeholder" id="resultPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>
+            <b>等待分析</b>
+            <p>上传数据并点击「运行分析」，此处将展示多标签诊断预测与置信度。</p>
+          </div>
+
+          <div class="result-body" id="resultBody">
+            <div class="result-banner warn" id="resultBanner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+              <span id="bannerText">演示模式：未连接后端模型，以下为浏览器内模拟推理结果，仅供界面演示。</span>
+            </div>
+            <div class="diag-head">
+              <span class="verdict" id="verdictText">—</span>
+              <span class="conf"><b id="confNum">—</b><span>最高置信度</span></span>
+            </div>
+            <div id="barList"></div>
+            <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+              <button class="btn btn-primary" id="exportBtn" style="padding:10px 18px;font-size:13px">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                导出分析报告
+              </button>
+            </div>
+            <div class="hero-note" style="margin-top:18px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span>结果仅供辅助参考，请结合临床表现并由专业医师复核。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HISTORY -->
+  <section id="history">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">历史记录 · History</span>
+        <h2>分析历史，<em>随时回看</em></h2>
+        <p class="lead">每次完成的心电分析都会保存在本机浏览器，可随时回看诊断结论、导出分析报告，或删除不再需要的记录。</p>
+      </div>
+
+      <div class="history-toolbar reveal">
+        <span style="font-size:13px;color:var(--ink-3)">共 <b id="historyCount" style="color:var(--brand-700)">0</b> 条记录（仅保存在本机浏览器）</span>
+        <span class="spacer"></span>
+        <button class="btn btn-ghost" id="clearHistory" style="color:var(--danger)">清空历史</button>
+      </div>
+
+      <div class="stat-grid reveal" style="margin-bottom:22px">
+        <div class="stat-card"><div class="k">总分析次数</div><div class="v" id="hTotal">0</div><div class="d">累计完成的推理</div></div>
+        <div class="stat-card"><div class="k">最近诊断</div><div class="v" id="hLatest" style="font-size:20px">—</div><div class="d">最近一次结论</div></div>
+        <div class="stat-card"><div class="k">平均置信度</div><div class="v" id="hAvg">—</div><div class="d">Top-1 平均置信度</div></div>
+        <div class="stat-card"><div class="k">记录状态</div><div class="v" style="font-size:18px">仅本机</div><div class="d">数据保存在浏览器</div></div>
+      </div>
+
+      <div class="history-empty reveal" id="historyEmpty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><circle cx="12" cy="12" r="10" opacity=".25"/></svg>
+        <b>暂无分析记录</b>
+        <p>前往「智能分析」上传一份 12 导联心电数据并运行分析，结果会自动保存在这里。</p>
+        <a class="btn btn-primary" href="#analysis" style="margin-top:18px">去分析一份心电</a>
+      </div>
+
+      <div class="rec-list" id="historyList"></div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">About us · 关于我们</span>
+        <h2>源于论文，<em>不止于论文</em></h2>
+        <p class="lead">DEFT —— Dual-Domain Multi-resolution Fusion Transformer，为「非平稳医学时间序列」提出的双域多分辨率融合框架。</p>
+      </div>
+
+      <p class="about-lead reveal">
+        DEFT 重新构想非平稳心电分析：不再于时域或频域中<b>二选一</b>，而是将每条记录分解为「反映基线节律的缓变分量」与「保留瞬态形态的带限细节」，驱动<b>时域流</b>与<b>频域流</b>双路并行，再通过严格对齐的交互式 patch 嵌入统一融合。
+      </p>
+
+      <div class="diff-grid">
+        <div class="diff reveal">
+          <span class="no">WHY · 01</span>
+          <h3>双域协同，而非单一路径</h3>
+          <p>时域模型易被高幅值变化主导、丢失真实频谱漂移；频域方法会平滑掉孤立早搏等短促病理事件。DEFT 让形态与频谱在共享网格上互补，两类信息都不被牺牲。</p>
+          <span class="vs">对比 · 时域 / 频域单流</span>
+        </div>
+        <div class="diff reveal d1">
+          <span class="no">WHY · 02</span>
+          <h3>严格对齐的融合机制</h3>
+          <p>在共享 lead-time patch 网格上构造波形与 MRA 描述符，同一位置的时频 token 一一对应，双向交叉注意力在「已知生理坐标」上交换信息，而非盲目推断对应关系。</p>
+          <span class="vs">对比 · 一般交叉注意力</span>
+        </div>
+        <div class="diff reveal d2">
+          <span class="no">WHY · 03</span>
+          <h3>可解释 + 稳健 + 轻量</h3>
+          <p>能量—注意力一致性让聚焦与生理能量分布一致；抗噪、抗导联缺失、跨源迁移最稳；9.5M 参数、2.8 GFLOPs 落于帕累托前沿，临床可用。</p>
+          <span class="vs">对比 · 黑盒 / 重模型</span>
+        </div>
+      </div>
+
+      <!-- 模型框架流程图 -->
+      <div class="arch reveal">
+        <div class="arch-title">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v4M17.5 10v4M10 6.5h4M10 17.5h4"/></svg></span>
+          <div><b>模型框架</b><br><span>DEFT 架构 · 双域多分辨率融合 Transformer</span></div>
+        </div>
+
+        <div class="arch-flow">
+          <div class="arch-box in"><b>输入 · 12 导联 ECG</b><small>X ∈ [C×T] · 100 Hz · 10 秒</small></div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-box fusion"><b>db4 多分辨率分析（MRA · J=4）</b><small>x = a<sub>J</sub> + Σ d<sub>j</sub>　→　局部能量 / 尺度比 / 跨导联同步性</small></div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-split">
+            <div class="arch-box"><b>时域流 Time Stream</b><small>patch 嵌入（C<sub>p</sub>=1 · T<sub>p</sub>=16）<br>标准化 → token</small></div>
+            <div class="arch-box"><b>频域流 Frequency Stream</b><small>MRA 描述符投影<br>能量 / 尺度比 / 同步性</small></div>
+          </div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-box"><b>共享 lead-time patch 网格</b><small>严格对齐 · 可分离位置编码（导联 + 时间）</small></div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-split">
+            <div class="arch-box"><b>时域编码器</b><small>4 层 Pre-LN Transformer · 8 头</small></div>
+            <div class="arch-box"><b>频域编码器</b><small>4 层 Pre-LN Transformer · 8 头</small></div>
+          </div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-box fusion"><b>双向交叉注意力融合</b><small>相对位置偏置 · 门控残差 · 交互 MLP</small></div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-box"><b>跨导联时序注意力 → Mask-aware 全局池化</b><small>记录级融合表示</small></div>
+          <div class="arch-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg></div>
+          <div class="arch-box in"><b>分类头 → 9 类心律失常概率</b><small>Normal · AF · I-AVB · LBBB · RBBB · PAC · PVC · STD · STE</small></div>
+          <div class="arch-side">
+            <span class="tag">辅助约束①：InfoNCE 跨域对齐</span>
+            <span class="tag">辅助约束②：能量—注意力一致性</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 实验结果 -->
+      <div class="reveal" style="margin-top:52px">
+        <div class="flow-title" style="margin-bottom:18px">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>
+          <div><b>实验结果</b><br><span>Experiment Results · 多数据集基准对比</span></div>
+        </div>
+        <p style="font-size:14px;color:var(--ink-3);max-width:760px;margin-bottom:22px">在 PTB-XL、PTB、CPSC2018、CSN 四项 12 导联 ECG 基准与两项 EEG 基准上，DEFT 均取得最优；关键指标显著超越时域与频域 SOTA 基线。</p>
+
+        <div class="stat-grid">
+          <div class="stat-card"><div class="k">PTB-XL · AUROC</div><div class="v">90.15<small>%</small></div><div class="d">超越最强时域基线 +0.57%</div></div>
+          <div class="stat-card"><div class="k">PTB-XL · Accuracy</div><div class="v">76.65<small>%</small></div><div class="d">超越最强时域基线 +3.63%</div></div>
+          <div class="stat-card"><div class="k">参数量</div><div class="v">9.5<small>M</small></div><div class="d">精度—成本帕累托前沿</div></div>
+          <div class="stat-card"><div class="k">计算量</div><div class="v">2.8<small>G</small></div><div class="d">FLOPs · 轻量可部署</div></div>
+        </div>
+
+        <div class="chart-panel" style="margin-top:22px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+            <b style="font-size:16px">PTB-XL 基准对比</b>
+            <div class="tabs" id="metricTabs">
+              <button class="tab active" data-m="0">Accuracy</button>
+              <button class="tab" data-m="1">Precision</button>
+              <button class="tab" data-m="2">Recall</button>
+              <button class="tab" data-m="3">F1 Score</button>
+              <button class="tab" data-m="4">AUROC</button>
+            </div>
+          </div>
+          <div class="bars" id="barsContainer"></div>
+
+          <div class="chart-grid">
+            <div>
+              <b style="font-size:14.5px;color:var(--ink-2)">多指标雷达（PTB-XL）</b>
+              <div class="radar-box"><svg id="radarSvg" viewBox="0 0 340 300"></svg></div>
+              <div class="legend">
+                <span><i style="background:var(--brand-600)"></i>DEFT (Ours)</span>
+                <span><i style="background:var(--brand-300)"></i>MedFormer</span>
+                <span><i style="background:var(--sand)"></i>FreDF</span>
+              </div>
+            </div>
+            <div>
+              <b style="font-size:14.5px;color:var(--ink-2)">消融研究（Accuracy %）</b>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>配置</th><th>PTB-XL</th><th>PTB</th><th>CPSC2018</th><th>CSN</th></tr></thead>
+                  <tbody>
+                    <tr><td>Transformer（基线）</td><td class="num">57.26</td><td class="num">69.93</td><td class="num">59.47</td><td class="num">69.14</td></tr>
+                    <tr><td>+ Interaction Patching</td><td class="num">64.83</td><td class="num">75.78</td><td class="num">66.83</td><td class="num">74.62</td></tr>
+                    <tr><td>+ Frequency Stream</td><td class="num">67.35</td><td class="num">78.41</td><td class="num">70.15</td><td class="num">77.89</td></tr>
+                    <tr><td class="me">DEFT（完整）</td><td class="num me">76.65</td><td class="num me">85.52</td><td class="num me">75.23</td><td class="num me">82.17</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-panel" style="margin-top:22px">
+          <b style="font-size:16px">完整基准 · Accuracy / AUROC（% ± std）</b>
+          <div class="table-wrap">
+            <table id="benchTable">
+              <thead><tr><th>数据集</th><th>模态</th><th>DEFT (Ours)</th><th>MedFormer</th><th>PatchTST</th><th>FreDF</th><th>FEDformer</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p style="font-size:11.5px;color:var(--ink-4);margin-top:10px">数据来源：DEFT 论文 Table 1–4（统一协议下的对比结果）。DEFT 在全部数据集上取得最优 Accuracy。</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="wrap">
+      <div class="foot-grid">
+        <div class="brand">
+          <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#eaf0f8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/></svg></span>
+          <div>
+            <b style="font-size:15px">心域智能 · DEFT</b>
+            <p>双域多分辨率融合 Transformer 心电辅助分析平台。透明、可解释、稳健。</p>
+          </div>
+        </div>
+        <div class="foot-col">
+          <b>平台</b>
+          <a href="#home">首页</a>
+          <a href="#features">功能页</a>
+          <a href="#analysis">智能分析</a>
+        </div>
+        <div class="foot-col">
+          <b>资源</b>
+          <a href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener">PTB-XL 数据集</a>
+          <a href="https://physionet.org/content/mimic-iv-ecg/1.0/" target="_blank" rel="noopener">MIMIC-IV-ECG</a>
+          <a href="https://moody-challenge.physionet.org/2021/" target="_blank" rel="noopener">CPSC2018 挑战</a>
+        </div>
+        <div class="foot-col">
+          <b>关于</b>
+          <a href="#about">论文方法</a>
+          <a href="#about">实验结果</a>
+          <a href="#analysis">模型接入</a>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <span>© 2026 心域智能 · DEFT</span>
+        <span>本平台仅供科研与辅助参考，不作为临床诊断依据</span>
+      </div>
+    </div>
+  </footer>
+</main>
+
+<!-- 登录弹窗 -->
+<div class="modal" id="loginModal">
+  <div class="mask" data-close="login"></div>
+  <div class="card">
+    <button class="icon-btn close" data-close="login" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <h3 class="serif" style="font-size:24px;margin-bottom:4px">欢迎回来</h3>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:20px">登录以访问完整分析与历史记录</p>
+    <div class="field"><label>账号 / 邮箱</label><input type="text" placeholder="name@hospital.cn" /></div>
+    <div class="field"><label>密码</label><input type="password" placeholder="••••••••" /></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px">登录</button>
+    <p style="font-size:12px;color:var(--ink-4);text-align:center;margin-top:16px">首次使用？<a href="#" style="color:var(--brand-600);font-weight:600">注册账号</a></p>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   0. 工具函数
+   ============================================================ */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const lerp = (a,b,t)=>a+(b-a)*t;
+
+/* ============================================================
+   1. 移动端导航
+   ============================================================ */
+const topnav = $('#topnav');
+$('#mobileHamburger').addEventListener('click', ()=>{
+  topnav.classList.toggle('open');
+});
+
+/* ============================================================
+   2. 页面切换（点击导航切换页面）
+   ============================================================ */
+const pages = ['home','features','analysis','history','about'];
+const topLinks = $$('.topnav a[data-nav]');
+
+function showPage(id){
+  if(!pages.includes(id)) id = 'home';
+  pages.forEach(p=>{
+    const el = document.getElementById(p);
+    if(el) el.classList.toggle('active', p===id);
+  });
+  topLinks.forEach(a=>a.classList.toggle('active', a.dataset.nav===id));
+  window.scrollTo({top:0, behavior:'auto'});
+  history.replaceState(null,'', '#'+id);
+  topnav.classList.remove('open');
+}
+
+// 所有内部锚点链接 → 切换页面
+$$('a[href^="#"]').forEach(a=>{
+  a.addEventListener('click', e=>{
+    const id = a.getAttribute('href').slice(1);
+    if(id && pages.includes(id)){
+      e.preventDefault();
+      showPage(id);
+    }
+  });
+});
+
+// 顶栏阴影随滚动
+let scrollTicking = false;
+window.addEventListener('scroll', ()=>{
+  if(!scrollTicking){ requestAnimationFrame(()=>{ $('#topbar').classList.toggle('scrolled', window.scrollY > 12); scrollTicking=false; }); scrollTicking=true; }
+}, {passive:true});
+
+// 初始页面（支持深链 #home / #analysis / ...）
+showPage((location.hash||'#home').slice(1));
+
+/* ============================================================
+   3. 通知 + 登录弹窗
+   ============================================================ */
+const notifPanel = $('#notifPanel');
+$('#notifBtn').addEventListener('click', e=>{ e.stopPropagation(); notifPanel.classList.toggle('open'); });
+document.addEventListener('click', e=>{ if(!notifPanel.contains(e.target)) notifPanel.classList.remove('open'); });
+
+const loginModal = $('#loginModal');
+$('#loginBtn').addEventListener('click', ()=>loginModal.classList.add('open'));
+$$('[data-close]').forEach(el=>el.addEventListener('click', ()=>loginModal.classList.remove('open')));
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ loginModal.classList.remove('open'); notifPanel.classList.remove('open'); } });
+
+/* ============================================================
+   4. 十二导联 ECG 动画
+   ============================================================ */
+const ecgCanvas = $('#ecgCanvas');
+const LEAD_NAMES = ['I','II','III','aVR','aVL','aVF','V1','V2','V3','V4','V5','V6'];
+const LEAD_SCALE = [0.82, 1.0, 0.42, -0.68, 0.46, 0.72, 0.92, 1.22, 1.30, 1.22, 1.05, 0.85];
+const LEAD_T     = [0.30, 0.34, 0.26, 0.30, 0.28, 0.32, 0.36, 0.40, 0.42, 0.40, 0.38, 0.34];
+
+function ecgSample(leadIdx, t){
+  const period = 60/72;
+  let tp = ((t % period) + period) % period;
+  const bump = (c,w,a)=> a*Math.exp(-((tp-c)*(tp-c))/(2*w*w));
+  const p = bump(0.10, 0.020, 0.15);
+  const q = bump(0.160,0.0075,-0.11);
+  const r = bump(0.176, 0.010, 1.00);
+  const s = bump(0.193, 0.009,-0.26);
+  const tw = bump(0.42, LEAD_T[leadIdx]*0.16, 0.30);
+  const sc = LEAD_SCALE[leadIdx];
+  const wave = (p + q + r + s + tw) * sc;
+  const wander = 0.035*Math.sin(t*0.6*Math.PI*2 + leadIdx*0.7) + 0.02*Math.sin(t*1.3*Math.PI*2 + leadIdx);
+  return wave + wander;
+}
+
+function drawECG(){
+  const dpr = window.devicePixelRatio || 1;
+  const rect = ecgCanvas.getBoundingClientRect();
+  const W = Math.max(320, rect.width);
+  const H = Math.round(W * 0.625);
+  ecgCanvas.width = W * dpr;
+  ecgCanvas.height = H * dpr;
+  const ctx = ecgCanvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const rows = 12;
+  const topPad = 26, botPad = 14, leftPad = 34, rightPad = 12;
+  const rowH = (H - topPad - botPad) / rows;
+  const timeWindow = 6;   // 秒
+
+  function frame(now){
+    const t = now/1000;
+    ctx.clearRect(0,0,W,H);
+
+    // 网格
+    ctx.strokeStyle = 'rgba(104,133,172,0.08)';
+    ctx.lineWidth = 1;
+    for(let i=0;i<rows;i++){
+      const y = topPad + i*rowH + rowH/2;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+    for(let x=0;x<W;x+=40){
+      ctx.beginPath(); ctx.moveTo(x,topPad); ctx.lineTo(x,H-botPad); ctx.stroke();
+    }
+
+    // 导联标签
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(61,74,92,0.55)';
+    ctx.textAlign = 'right';
+    for(let i=0;i<rows;i++){
+      const y = topPad + i*rowH + rowH/2 + 4;
+      ctx.fillText(LEAD_NAMES[i], leftPad-8, y);
+    }
+
+    // 波形
+    for(let i=0;i<rows;i++){
+      const cy = topPad + i*rowH + rowH/2;
+      const amp = rowH*0.36;
+      ctx.strokeStyle = i===1 ? 'rgba(83,109,148,0.95)' : 'rgba(83,109,148,0.75)';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      const N = Math.max(2, Math.floor(W-leftPad-rightPad));
+      for(let px=0; px<=N; px++){
+        const tt = t - timeWindow + (px/N)*timeWindow + (i*0.013); // 各导联微错相，随时间滚动
+        const v = ecgSample(i, tt);
+        const x = leftPad + px;
+        const y = cy - v*amp;
+        if(px===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    // 顶部标题行
+    ctx.fillStyle = 'rgba(37,48,63,0.65)';
+    ctx.font = '600 11px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('12-lead · 70 bpm · simulated', 14, 15);
+    ctx.fillStyle = 'rgba(104,133,172,0.9)';
+    ctx.fillText('●', W-16, 15);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+drawECG();
+let ecgResize; window.addEventListener('resize', ()=>{ clearTimeout(ecgResize); ecgResize=setTimeout(drawECG,200); });
+
+/* ============================================================
+   5. 数字滚动
+   ============================================================ */
+function countUp(el){
+  const target = parseFloat(el.dataset.count);
+  const decimals = (el.dataset.count.split('.')[1]||'').length;
+  const dur = 1400, start = performance.now();
+  function step(now){
+    const p = Math.min(1,(now-start)/dur);
+    const e = 1-Math.pow(1-p,3);
+    el.textContent = (target*e).toFixed(decimals);
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ============================================================
+   6. 滚动显现
+   ============================================================ */
+if (!('IntersectionObserver' in window)) {
+  $$('.reveal').forEach(el=>el.classList.add('in'));
+} else {
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{
+      if(en.isIntersecting){
+        en.target.classList.add('in');
+        en.target.querySelectorAll('[data-count]').forEach(countUp);
+        io.unobserve(en.target);
+      }
+    });
+  },{threshold:0.12, rootMargin:'0px 0px -8% 0px'});
+  $$('.reveal').forEach(el=>io.observe(el));
+}
+
+/* ============================================================
+   7. Benchmark 数据
+   ============================================================ */
+const PTBXL = [
+  {name:'DEFT (Ours)',  v:[76.65,68.12,67.01,67.56,90.15], me:true},
+  {name:'FreDF',        v:[73.81,67.43,65.22,66.31,89.74]},
+  {name:'PatchTST',     v:[73.02,65.35,60.48,62.82,89.55]},
+  {name:'MedFormer',    v:[72.71,64.10,59.98,61.97,89.58]},
+  {name:'iTransformer', v:[69.25,59.58,54.68,57.02,86.72]},
+  {name:'FITS',         v:[68.92,64.31,62.04,63.15,87.56]},
+  {name:'WaveletMixer', v:[64.38,62.17,58.74,60.41,85.89]},
+  {name:'FEDformer',    v:[61.23,60.14,56.42,58.21,84.12]}
+];
+const METRIC_NAMES = ['Accuracy','Precision','Recall','F1 Score','AUROC'];
+
+function renderBars(metricIdx){
+  const container = $('#barsContainer');
+  const max = Math.max(...PTBXL.map(m=>m.v[metricIdx]));
+  container.innerHTML = '';
+  PTBXL.forEach(m=>{
+    const v = m.v[metricIdx];
+    const row = document.createElement('div');
+    row.className = 'row' + (m.me ? ' me' : '');
+    row.innerHTML =
+      '<span class="nm">'+m.name+(m.me?'<span class="badge-best">最优</span>':'')+'</span>'+
+      '<div class="track"><div class="fill" data-w="'+ (v/max*100) +'"></div><span class="fill-txt">'+v.toFixed(2)+'</span></div>'+
+      '<span class="val">'+v.toFixed(2)+'</span>';
+    container.appendChild(row);
+  });
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      $$('.fill', container).forEach(f=>f.style.width = f.dataset.w + '%');
+    });
+  });
+}
+$('#metricTabs').addEventListener('click', e=>{
+  const tab = e.target.closest('.tab'); if(!tab) return;
+  $$('#metricTabs .tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  renderBars(parseInt(tab.dataset.m));
+});
+renderBars(0);
+
+/* 雷达图 */
+function drawRadar(){
+  const svg = $('#radarSvg');
+  const cx=170, cy=150, R=96, N=5;
+  const datasets = {
+    'DEFT (Ours)': {v:[76.65,68.12,67.01,67.56,90.15], color:'var(--brand-600)', fill:'rgba(83,109,148,0.16)'},
+    'MedFormer':   {v:[72.71,64.10,59.98,61.97,89.58], color:'var(--brand-300)', fill:'rgba(167,186,215,0.10)'},
+    'FreDF':       {v:[73.81,67.43,65.22,66.31,89.74], color:'var(--sand)',      fill:'rgba(185,196,216,0.12)'}
+  };
+  const norm = [0,1,2,3,4].map(i=>Math.max(...Object.values(datasets).map(d=>d.v[i])));
+  const pts = d => [0,1,2,3,4].map(i=>{
+    const ang = -Math.PI/2 + i*2*Math.PI/N;
+    const rr = R * (d.v[i]/norm[i]);
+    return [cx + rr*Math.cos(ang), cy + rr*Math.sin(ang)];
+  });
+
+  let s = '';
+  // 网格
+  for(let ring=1; ring<=4; ring++){
+    const rr = R*ring/4;
+    const poly = [0,1,2,3,4].map(i=>{
+      const ang = -Math.PI/2 + i*2*Math.PI/N;
+      return (cx+rr*Math.cos(ang))+','+(cy+rr*Math.sin(ang));
+    }).join(' ');
+    s += '<polygon points="'+poly+'" fill="none" stroke="rgba(104,133,172,0.14)" stroke-width="1"/>';
+  }
+  // 轴
+  for(let i=0;i<N;i++){
+    const ang = -Math.PI/2 + i*2*Math.PI/N;
+    s += '<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+R*Math.cos(ang))+'" y2="'+(cy+R*Math.sin(ang))+'" stroke="rgba(104,133,172,0.14)"/>';
+    // 标签
+    const lx = cx+(R+22)*Math.cos(ang), ly = cy+(R+22)*Math.sin(ang);
+    s += '<text x="'+lx+'" y="'+ly+'" text-anchor="middle" dominant-baseline="middle" font-size="10.5" fill="rgba(61,74,92,0.65)" font-weight="600">'+METRIC_NAMES[i]+'</text>';
+  }
+  // 数据
+  Object.values(datasets).forEach(d=>{
+    const p = pts(d).map(x=>x.join(',')).join(' ');
+    s += '<polygon points="'+p+'" fill="'+d.fill+'" stroke="'+d.color+'" stroke-width="2" stroke-linejoin="round"/>';
+    pts(d).forEach(pt=>{ s += '<circle cx="'+pt[0]+'" cy="'+pt[1]+'" r="2.6" fill="'+d.color+'"/>'; });
+  });
+  svg.innerHTML = s;
+}
+drawRadar();
+
+/* 完整基准表 */
+const BENCH = [
+  ['PTB-XL','ECG',['76.65 / 90.15',0.20,0.17],['72.71 / 89.58'],['73.02 / 89.55'],['73.81 / 89.74'],['61.23 / 84.12']],
+  ['PTB','ECG',['85.52 / 92.81'],['82.30 / 91.60'],['74.74 / 88.79'],['84.12 / 92.11'],['72.14 / 87.23']],
+  ['CPSC2018','ECG',['75.23 / 88.32'],['74.87 / 88.17'],['71.04 / 86.47'],['73.61 / 88.16'],['63.82 / 84.14']],
+  ['CSN','ECG',['82.17 / 91.22'],['81.33 / 91.37'],['78.43 / 88.53'],['80.64 / 90.93'],['72.11 / 87.31']],
+  ['APAVA','EEG',['81.07 / 86.12'],['78.68 / 83.62'],['67.14 / 65.72'],['77.42 / 84.84'],['68.21 / 77.84']],
+  ['TDBRAIN','EEG',['91.07 / 96.92'],['89.58 / 96.43'],['79.27 / 87.95'],['89.84 / 96.34'],['81.34 / 93.64']]
+];
+function renderBench(){
+  const tbody = $('#benchTable tbody');
+  tbody.innerHTML = '';
+  BENCH.forEach(row=>{
+    const [ds, mod, me, m1, m2, m3, m4] = row;
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><b>'+ds+'</b> <span class="badge-best" style="background:var(--brand-300);color:var(--brand-900)">'+mod+'</span></td>'+
+      '<td>'+mod+'</td>'+
+      '<td class="num me">'+me[0]+'</td>'+
+      '<td class="num">'+m1[0]+'</td>'+
+      '<td class="num">'+m2[0]+'</td>'+
+      '<td class="num">'+m3[0]+'</td>'+
+      '<td class="num">'+m4[0]+'</td>';
+    tbody.appendChild(tr);
+  });
+}
+renderBench();
+
+/* ============================================================
+   8. 分析页：文件上传 + 模型连接 + 推理
+   ============================================================ */
+// 如需指定远程后端，请把 API_BASE_OVERRIDE 改为固定地址，例如 'https://api.example.com'
+const API_BASE_OVERRIDE = '';
+// 未指定时：若页面由后端提供则用同源相对路径；否则回退到本地服务地址
+const API_BASE = API_BASE_OVERRIDE || ((location.protocol === 'http:' || location.protocol === 'https:') ? '' : 'http://127.0.0.1:8000');
+const dropzone = $('#dropzone');
+const fileInput = $('#fileInput');
+const fileChip  = $('#fileChip');
+let currentFile = null;
+
+dropzone.addEventListener('click', ()=>fileInput.click());
+dropzone.addEventListener('dragover', e=>{ e.preventDefault(); dropzone.classList.add('drag'); });
+dropzone.addEventListener('dragleave', ()=>dropzone.classList.remove('drag'));
+dropzone.addEventListener('drop', e=>{
+  e.preventDefault(); dropzone.classList.remove('drag');
+  if(e.dataTransfer.files.length) setFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', ()=>{ if(fileInput.files.length) setFile(fileInput.files[0]); });
+
+function setFile(f){
+  currentFile = f;
+  $('#fileName').textContent = f.name;
+  $('#fileSize').textContent = (f.size/1024).toFixed(1)+' KB';
+  fileChip.classList.add('show');
+}
+
+/* 连接检测 */
+const connStatus = $('#connStatus');
+let backendOnline = false;
+async function checkBackend(){
+  try{
+    const ctrl = new AbortController();
+    const t = setTimeout(()=>ctrl.abort(), 2500);
+    const r = await fetch(API_BASE + '/api/health', {signal: ctrl.signal});
+    clearTimeout(t);
+    if(r.ok){
+      const data = await r.json().catch(()=>({}));
+      backendOnline = true;
+      connStatus.className = 'conn online';
+      $('#connLabel').textContent = '已连接模型 · '+(data.model||'DEFT');
+      $('#connHint').textContent = (data.checkpoint ? '权重：'+data.checkpoint : '推理服务就绪');
+      $('#modeBadge').textContent = '模型在线';
+      $('#modeBadge').style.cssText = 'color:var(--ok);background:rgba(104,133,172,.14)';
+      return true;
+    }
+  }catch(e){ /* 未连接 */ }
+  backendOnline = false;
+  connStatus.className = 'conn offline';
+  $('#connLabel').textContent = '未连接后端模型';
+  $('#connHint').textContent = '将使用浏览器内演示模式';
+  $('#modeBadge').textContent = '演示模式';
+  $('#modeBadge').style.cssText = 'color:var(--sand);background:rgba(185,196,216,.2)';
+  return false;
+}
+$('#retryConn').addEventListener('click', checkBackend);
+checkBackend();
+
+/* 多标签类别（CPSC2018 官方 9 类，顺序与后端一致） */
+const LABELS = [
+  {key:'Normal', name:'正常窦性心律'},
+  {key:'AF',     name:'心房颤动 (AF)'},
+  {key:'I-AVB',  name:'一度房室传导阻滞'},
+  {key:'LBBB',   name:'左束支传导阻滞'},
+  {key:'RBBB',   name:'右束支传导阻滞'},
+  {key:'PAC',    name:'房性早搏 (PAC)'},
+  {key:'PVC',    name:'室性早搏 (PVC)'},
+  {key:'STD',    name:'ST 段压低'},
+  {key:'STE',    name:'ST 段抬高'}
+];
+
+/* 演示样本（未连接后端时使用） */
+const DEMOS = {
+  normal: {name:'演示样本 A · 正常',   probs:[0.95,0.02,0.02,0.01,0.01,0.03,0.02,0.01,0.01]},
+  af:     {name:'演示样本 B · 房颤',   probs:[0.04,0.93,0.05,0.02,0.02,0.30,0.08,0.04,0.03]},
+  pvc:    {name:'演示样本 C · 室性早搏', probs:[0.10,0.03,0.03,0.02,0.02,0.15,0.88,0.06,0.05]},
+  lbbb:   {name:'演示样本 D · 左束支阻滞', probs:[0.06,0.02,0.05,0.91,0.03,0.04,0.03,0.02,0.02]}
+};
+
+function runDemo(){
+  const keys = Object.keys(DEMOS);
+  const seed = currentFile ? (currentFile.size % keys.length) : 0;
+  const demo = DEMOS[keys[seed]] || DEMOS.normal;
+  return {demo:true, probs:demo.probs, heartRate:null,
+    samplingRate:Number($('#samplingRate').value), numLeads:Number($('#numLeads').value)};
+}
+
+function rhythmOf(key){
+  const map = {
+    'Normal':'窦性心律 · 规律', 'AF':'心房颤动 · 不规则', 'I-AVB':'窦性 · 房室传导延长',
+    'LBBB':'窦性 · 左束支阻滞', 'RBBB':'窦性 · 右束支阻滞', 'PAC':'窦性伴房早',
+    'PVC':'窦性伴室早', 'STD':'ST 段压低', 'STE':'ST 段抬高'
+  };
+  return map[key] || '—';
+}
+
+let currentResult = null;
+
+function renderResult(res){
+  $('#resultPlaceholder').style.display = 'none';
+  $('#resultBody').classList.add('show');
+
+  const banner = $('#resultBanner');
+  if(res.demo){
+    banner.className = 'result-banner warn';
+    $('#bannerText').textContent = '演示模式：未连接后端模型，以下为浏览器内模拟推理结果。';
+  } else {
+    banner.className = 'result-banner ok';
+    $('#bannerText').textContent = '模型在线：结果由 DEFT 后端推理产生。';
+  }
+
+  // 最高置信度类别
+  let best = 0;
+  res.probs.forEach((p,i)=>{ if(p>res.probs[best]) best=i; });
+  const verdictKey = LABELS[best].key;
+  $('#verdictText').textContent = LABELS[best].name;
+  $('#confNum').textContent = (res.probs[best]*100).toFixed(1)+'%';
+
+  const list = $('#barList');
+  list.innerHTML = '';
+  res.probs.forEach((p,i)=>{
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML =
+      '<div class="top"><b>'+LABELS[i].name+'</b><span>'+(p*100).toFixed(1)+'%</span></div>'+
+      '<div class="bar"><i data-w="'+(p*100)+'"></i></div>';
+    list.appendChild(row);
+  });
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    $$('#barList .bar i').forEach(b=>b.style.width=b.dataset.w+'%');
+  }));
+
+  const rec = {
+    id: Date.now(),
+    time: new Date().toISOString(),
+    fileName: (currentFile && currentFile.name) || '演示样本',
+    samplingRate: res.samplingRate || Number($('#samplingRate').value),
+    numLeads: res.numLeads || Number($('#numLeads').value),
+    duration: res.duration || null,
+    demo: !!res.demo,
+    verdictKey: verdictKey,
+    verdictName: LABELS[best].name,
+    confidence: res.probs[best],
+    probs: res.probs.slice(),
+    heartRate: res.heartRate || null,
+    rhythm: rhythmOf(verdictKey)
+  };
+  currentResult = rec;
+  saveRecord(rec);
+}
+
+$('#runBtn').addEventListener('click', async ()=>{
+  if(!currentFile && !backendOnline){
+    renderResult(runDemo());
+    return;
+  }
+  if(backendOnline && currentFile){
+    const btn = $('#runBtn'); const old = btn.innerHTML;
+    btn.innerHTML = '分析中…'; btn.disabled = true;
+    try{
+      const fd = new FormData();
+      fd.append('file', currentFile);
+      fd.append('num_leads', $('#numLeads').value);
+      fd.append('sampling_rate', $('#samplingRate').value);
+      const r = await fetch(API_BASE + '/api/predict', {method:'POST', body:fd});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const data = await r.json();
+      renderResult({demo:!!data.demo, probs:data.probabilities,
+        heartRate:data.heart_rate, samplingRate:data.sampling_rate,
+        numLeads:data.num_leads, duration:data.duration_sec});
+    }catch(e){
+      renderResult(runDemo());
+    }finally{
+      btn.innerHTML = old; btn.disabled = false;
+    }
+    return;
+  }
+  renderResult(runDemo());
+});
+
+/* ============================================================
+   8b. 历史记录 + 导出
+   ============================================================ */
+const HISTORY_KEY = 'deft_ecg_history';
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtTime(iso){ const d=new Date(iso); const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+function loadHistory(){ try{ return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); }catch(e){ return []; } }
+function saveRecord(rec){
+  const arr = loadHistory();
+  arr.unshift(rec);
+  if(arr.length>200) arr.length=200;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+  renderHistory();
+}
+function deleteRecord(id){
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(loadHistory().filter(r=>r.id!==id)));
+  renderHistory();
+}
+function clearHistoryAll(){ localStorage.removeItem(HISTORY_KEY); renderHistory(); }
+function topClasses(probs,n){ return probs.map((p,i)=>({i,p})).sort((a,b)=>b.p-a.p).slice(0,n).map(o=>({name:LABELS[o.i].name,p:o.p})); }
+
+function renderHistory(){
+  const arr = loadHistory();
+  const list = $('#historyList');
+  const empty = $('#historyEmpty');
+  $('#historyCount').textContent = arr.length;
+  $('#hTotal').textContent = arr.length;
+  if(arr.length){
+    $('#hLatest').textContent = arr[0].verdictName;
+    $('#hAvg').textContent = (arr.reduce((s,r)=>s+(r.confidence||0),0)/arr.length*100).toFixed(1)+'%';
+  } else {
+    $('#hLatest').textContent = '—';
+    $('#hAvg').textContent = '—';
+  }
+  empty.style.display = arr.length ? 'none' : 'flex';
+  list.innerHTML = '';
+  arr.forEach(r=>{
+    const top = topClasses(r.probs, 3);
+    const card = document.createElement('div');
+    card.className = 'rec-card';
+    card.innerHTML =
+      '<div class="rec-head">'+
+        '<span class="nm">'+esc(r.fileName)+'</span>'+
+        '<span class="time">'+fmtTime(r.time)+'</span>'+
+        '<span class="verdict-badge">'+esc(r.verdictName)+' · '+(r.confidence*100).toFixed(1)+'%</span>'+
+      '</div>'+
+      '<div class="rec-meta">'+
+        '<div class="m"><div class="k">心率</div><div class="v">'+(r.heartRate?r.heartRate+' bpm':'—')+'</div></div>'+
+        '<div class="m"><div class="k">节律</div><div class="v" style="font-size:13px">'+esc(r.rhythm||'—')+'</div></div>'+
+        '<div class="m"><div class="k">采样率</div><div class="v">'+(r.samplingRate||'—')+' Hz</div></div>'+
+        '<div class="m"><div class="k">导联</div><div class="v">'+(r.numLeads||'—')+'</div></div>'+
+      '</div>'+
+      '<div class="rec-bars">'+top.map(t=>'<span class="chip2 hot">'+esc(t.name)+' '+(t.p*100).toFixed(1)+'%</span>').join('')+'</div>'+
+      '<div class="rec-actions">'+
+        '<button class="btn btn-ghost" data-del="'+r.id+'">删除</button>'+
+        '<button class="btn btn-primary" data-exp="'+r.id+'">导出分析结果</button>'+
+      '</div>';
+    list.appendChild(card);
+  });
+  list.onclick = (e)=>{
+    const del = e.target.closest('[data-del]');
+    const exp = e.target.closest('[data-exp]');
+    if(del) deleteRecord(Number(del.dataset.del));
+    if(exp){ const rec = loadHistory().find(r=>r.id===Number(exp.dataset.exp)); if(rec) exportRecord(rec); }
+  };
+}
+
+function exportRecord(rec){
+  if(!rec) return;
+  const L = [];
+  L.push('心域智能 · DEFT 心电辅助分析报告');
+  L.push('========================================');
+  L.push('分析时间 : '+fmtTime(rec.time));
+  L.push('样本文件 : '+rec.fileName);
+  L.push('采样率   : '+(rec.samplingRate||'—')+' Hz');
+  L.push('导联数   : '+(rec.numLeads||'—'));
+  L.push('时长     : '+(rec.duration?rec.duration+' 秒':'—'));
+  L.push('心率     : '+(rec.heartRate?rec.heartRate+' bpm':'—'));
+  L.push('节律     : '+(rec.rhythm||'—'));
+  L.push('推理模式 : '+(rec.demo?'演示模式':'模型在线'));
+  L.push('');
+  L.push('诊断结果（CPSC2018 九类 · 阳性阈值 0.5）：');
+  const bestIdx = rec.probs.indexOf(Math.max(...rec.probs));
+  rec.probs.forEach((p,i)=>{
+    L.push('  '+(i===bestIdx?'[★]':'[ ]')+' '+LABELS[i].name+'　'+(p*100).toFixed(2)+'%');
+  });
+  L.push('');
+  L.push('结论：'+rec.verdictName+'（置信度 '+(rec.confidence*100).toFixed(2)+'%）');
+  L.push('');
+  L.push('备注：本报告仅供辅助参考，不作为临床诊断依据。');
+  const text = '\ufeff'+L.join('\r\n');
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'DEFT分析报告_'+(rec.fileName.replace(/\.[^.]+$/,'')||'record')+'.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+$('#exportBtn').addEventListener('click', ()=>{ if(currentResult) exportRecord(currentResult); });
+$('#clearHistory').addEventListener('click', ()=>{ if(confirm('确定清空所有历史记录？')) clearHistoryAll(); });
+renderHistory();
+
+/* ============================================================
+   9. 首页数字滚动初始化
+   ============================================================ */
+const homeStats = [['90.15',0],['9.5',1],['2.8',1],['6',0]];
+const heroStatEls = ()=>document.querySelectorAll('.hero-meta .m > b:first-child');
+heroStatEls().forEach((b,i)=>{ if(homeStats[i]) b.dataset.count = homeStats[i][0]; });
+// 立即给首页数字赋值，避免未滚动时为空
+window.addEventListener('load', ()=>{
+  heroStatEls().forEach(b=>{ if(b.dataset.count) countUp(b); });
+});
+
+})();
+</script>
+</body>
+</html>
