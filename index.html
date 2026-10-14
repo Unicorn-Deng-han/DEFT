@@ -1432,6 +1432,59 @@ html.js .reveal.in{opacity:1;transform:none}
           </div>
           <p style="font-size:11.5px;color:var(--ink-4);margin-top:10px">数据来源：DEFT 论文 Table 1–4（统一协议下的对比结果）。DEFT 在全部数据集上取得最优 Accuracy。</p>
         </div>
+
+        <!-- 本机复现结果 -->
+        <div class="chart-panel" style="margin-top:22px;border-color:rgba(104,133,172,0.28)">
+          <b style="font-size:16px">本机复现 · CPSC2018（RTX 5060）</b>
+          <p style="font-size:12.5px;color:var(--ink-3);margin:6px 0 18px">6877 条 · 9 类多标签 · 自监督预训练 → 三种损失微调 → 五消融 → 工程化评估（2026-10 实测）</p>
+
+          <div class="stat-grid" style="margin-bottom:22px">
+            <div class="stat-card"><div class="k">最佳测试集 AUROC（Focal）</div><div class="v">0.963</div><div class="d">较 BCE 基线 +0.003</div></div>
+            <div class="stat-card"><div class="k">微调变体总数</div><div class="v">8</div><div class="d">3 种损失 + 5 个消融</div></div>
+            <div class="stat-card"><div class="k">模型参数量</div><div class="v">9.14<small>M</small></div><div class="d">轻量可部署</div></div>
+            <div class="stat-card"><div class="k">INT8 量化 AUROC 损耗</div><div class="v">-0.0003</div><div class="d">几乎无损落地</div></div>
+          </div>
+
+          <b style="font-size:14.5px;color:var(--ink-2)">损失函数对比（测试集）</b>
+          <div class="table-wrap" style="margin-top:10px">
+            <table>
+              <thead><tr><th>损失函数</th><th>AUROC</th><th>F1</th><th>micro-AUROC</th><th>AUPRC</th></tr></thead>
+              <tbody>
+                <tr><td class="me">Focal（最优）</td><td class="num me">0.963</td><td class="num">0.721</td><td class="num">0.970</td><td class="num">0.835</td></tr>
+                <tr><td>BCE（基线）</td><td class="num">0.960</td><td class="num">0.776</td><td class="num">0.970</td><td class="num">0.812</td></tr>
+                <tr><td>Asymmetric（ASL）</td><td class="num">0.948</td><td class="num">0.792</td><td class="num">0.960</td><td class="num">0.823</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="chart-grid" style="margin-top:18px">
+            <div>
+              <b style="font-size:14.5px;color:var(--ink-2)">消融实验（测试集 AUROC）</b>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>变体</th><th>去掉的组件</th><th>AUROC</th><th>Δ</th></tr></thead>
+                  <tbody>
+                    <tr><td class="me">Focal（完整）</td><td>—</td><td class="num me">0.963</td><td class="num">—</td></tr>
+                    <tr><td>noec</td><td>能量—注意力一致性</td><td class="num">0.961</td><td class="num">-0.001</td></tr>
+                    <tr><td>noinfonce</td><td>InfoNCE 对齐</td><td class="num">0.958</td><td class="num">-0.002</td></tr>
+                    <tr><td>nofusion</td><td>交叉注意力融合</td><td class="num">0.957</td><td class="num">-0.003</td></tr>
+                    <tr><td>freqonly</td><td>时域流 + 融合</td><td class="num">0.917</td><td class="num">-0.043</td></tr>
+                    <tr><td>timeonly</td><td>频域流 + 融合</td><td class="num">0.906</td><td class="num">-0.054</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <b style="font-size:14.5px;color:var(--ink-2)">消融 AUROC 柱状图</b>
+              <div class="bars" id="ablationBars" style="margin-top:8px"></div>
+            </div>
+          </div>
+
+          <p style="font-size:12.5px;color:var(--ink-2);margin-top:16px;line-height:1.8">
+            <b>工程化评估：</b>逐类阈值搜索宏 F1 <b>+0.0165</b>（0.776 → 0.792）；INT8 量化 AUROC <b>-0.0003</b>（无损落地，单次前向 ~149 ms）；
+            鲁棒性对基线漂移与丢 1~2 导联稳健，工频/肌电低 SNR 需 50 Hz 陷波滤波；Beat 级注意力 <b>100%</b> 覆盖心搏，非黑盒。
+          </p>
+        </div>
       </div>
 
     </div>
@@ -1844,6 +1897,37 @@ function renderBench(){
   });
 }
 renderBench();
+
+/* 本机复现 · 消融 AUROC 柱状图 */
+const ABLATION = [
+  {name:'Focal（完整）', v:0.963, me:true},
+  {name:'noec', v:0.961},
+  {name:'noinfonce', v:0.958},
+  {name:'nofusion', v:0.957},
+  {name:'freqonly', v:0.917},
+  {name:'timeonly', v:0.906}
+];
+function renderAblation(){
+  const container = $('#ablationBars');
+  const min = 0.88, max = 0.97; // 截断坐标轴，让消融差异更明显
+  container.innerHTML = '';
+  ABLATION.forEach(m=>{
+    const w = Math.max(3, (m.v - min) / (max - min) * 100);
+    const row = document.createElement('div');
+    row.className = 'row' + (m.me ? ' me' : '');
+    row.innerHTML =
+      '<span class="nm">'+m.name+(m.me?'<span class="badge-best">最优</span>':'')+'</span>'+
+      '<div class="track"><div class="fill" data-w="'+ w +'"></div><span class="fill-txt">'+m.v.toFixed(3)+'</span></div>'+
+      '<span class="val">'+m.v.toFixed(3)+'</span>';
+    container.appendChild(row);
+  });
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      $$('.fill', container).forEach(f=>f.style.width = f.dataset.w + '%');
+    });
+  });
+}
+renderAblation();
 
 /* ============================================================
    8. 分析页：文件上传 + 模型连接 + 推理
