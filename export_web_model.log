@@ -1,0 +1,14 @@
+[cfg] {"num_leads": 12, "num_classes": 9, "wavelet": "db4", "wavelet_levels": 4, "patch_size": 16, "patch_stride": 16, "d_model": 256, "num_layers": 4, "num_heads": 8, "ffn_dim": 1024, "dropout": 0.1, "max_patches": 1024}
+[ref] torch(原实现) logits: [[-5.862339019775391, 1.1362299919128418, -7.395166873931885, -10.39594554901123, -4.523252010345459, 1.4291510581970215, -8.76992416381836, -0.5686249732971191, -8.80472183227539]]
+[check] patch 等价性  max|dlogits|=0.000e+00  max|dpool_weights|=0.000e+00
+[export] legacy OK 3.8s  37.4MB
+[check] onnx(fp32) vs torch  max|dlogits|=2.861e-06
+[export] int8 12.0MB
+[check] int8 vs fp32  max|dlogits|=0.0278  max|dprob|=0.0043
+[check] fp32 probs: [[0.00279999990016222, 0.7570000290870667, 0.0006000000284984708, 0.0, 0.010700000450015068, 0.8068000078201294, 0.00019999999494757503, 0.36160001158714294, 0.00019999999494757503]]
+[check] int8 probs: [[0.002899999963119626, 0.7538999915122986, 0.0006000000284984708, 0.0, 0.010999999940395355, 0.8075000047683716, 0.00019999999494757503, 0.3573000133037567, 0.00019999999494757503]]
+[ops/fp32] {"Add": 137, "And": 1, "Cast": 79, "Clip": 10, "Concat": 102, "Constant": 3758, "ConstantOfShape": 23, "Conv": 7, "Div": 46, "Equal": 4, "Erf": 11, "Expand": 6, "Gather": 62, "Gemm": 2, "Greater": 2, "Identity": 5, "LayerNormalization": 26, "Log": 2, "MatMul": 89, "Mod": 1, "Mul": 100, "Not": 4, "OneHot": 1, "Or": 1, "Pad": 17, "Range": 2, "ReduceSum": 25, "Reshape": 110, "Shape": 47, "Sigmoid": 2, "Slice": 655, "Softmax": 12, "Sqrt": 8, "Squeeze": 4, "Sub": 10, "Tile": 2, "Transpose": 68, "Unsqueeze": 815, "Where": 17}
+[io/fp32] in=[('signal', [1, 12, 1000])]  out=['logits', 'pool_weights']
+[ops/int8] {"Add": 139, "And": 1, "Cast": 147, "Clip": 10, "Concat": 102, "Constant": 3758, "ConstantOfShape": 23, "Conv": 7, "Div": 46, "DynamicQuantizeLinear": 50, "Equal": 4, "Erf": 11, "Expand": 6, "Gather": 62, "Greater": 2, "Identity": 5, "LayerNormalization": 26, "Log": 2, "MatMul": 23, "MatMulInteger": 68, "Mod": 1, "Mul": 236, "Not": 4, "OneHot": 1, "Or": 1, "Pad": 17, "Range": 2, "ReduceSum": 25, "Reshape": 110, "Shape": 47, "Sigmoid": 2, "Slice": 655, "Softmax": 12, "Sqrt": 8, "Squeeze": 4, "Sub": 10, "Tile": 2, "Transpose": 68, "Unsqueeze": 815, "Where": 17}
+[io/int8] in=[('signal', [1, 12, 1000])]  out=['logits', 'pool_weights']
+[done] 前端加载顺序：deft_ecg_int8.onnx → deft_ecg.onnx → 后端 API → 演示模式

@@ -1961,15 +1961,15 @@ function setFile(f){
    8a. 推理引擎：网页内置 DEFT 模型（优先）→ 后端 API（回退）→ 演示模式
    ------------------------------------------------------------
    · 模型由 export_web_model.py 从 checkpoint 导出，与 index.html 放在同一目录：
-       deft_ecg_int8.onnx  INT8 动态量化（约 12 MB，默认加载）
-       deft_ecg.onnx       FP32 参考（约 37 MB，回退加载）
+       deft_ecg_int8.onnx   INT8 动态量化（约 12 MB，默认加载）
+       deft_ecg_fp16.onnx   FP16 权重压缩（约 20 MB，回退加载）
      固定输入 [1, 12, 1000]（12 导联 · 100 Hz · 10 秒），输出 logits(9 类) + pool_weights(导联注意力)。
    · 运行时 onnxruntime-web 走 CDN 自动加载；如需完全离线，把 ORT_SOURCES 换成自托管目录
      （目录内需含 ort.min.js 与 ort-wasm-simd-threaded.mjs / .wasm）。
    ============================================================ */
 const MODEL_LEADS = 12;         // 模型固定 12 导联
 const MODEL_INPUT_LEN = 1000;   // 10 s @ 100 Hz
-const MODEL_FILES = ['deft_ecg_int8.onnx', 'deft_ecg.onnx'];
+const MODEL_FILES = ['deft_ecg_int8.onnx', 'deft_ecg_fp16.onnx'];
 const ORT_VERSION = '1.23.2';
 const ORT_SOURCES = [
   'https://cdn.jsdelivr.net/npm/onnxruntime-web@' + ORT_VERSION + '/dist/',
