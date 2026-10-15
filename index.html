@@ -1161,8 +1161,8 @@ html.js .reveal.in{opacity:1;transform:none}
 
           <div class="conn offline" id="connStatus">
             <span class="state"></span>
-            <b id="connLabel">未连接后端模型</b>
-            <span id="connHint">未检测到后端 → 演示模式；本地请访问 127.0.0.1:8000</span>
+            <b id="connLabel">正在初始化推理引擎…</b>
+            <span id="connHint">正在加载网页内置 DEFT 模型…</span>
             <button class="try" id="retryConn">重试</button>
           </div>
 
@@ -1957,9 +1957,104 @@ function setFile(f){
   fileChip.classList.add('show');
 }
 
-/* 连接检测 */
+/* ============================================================
+   8a. 推理引擎：网页内置 DEFT 模型（优先）→ 后端 API（回退）→ 演示模式
+   ------------------------------------------------------------
+   · 模型由 export_web_model.py 从 checkpoint 导出，与 index.html 放在同一目录：
+       deft_ecg_int8.onnx  INT8 动态量化（约 12 MB，默认加载）
+       deft_ecg.onnx       FP32 参考（约 37 MB，回退加载）
+     固定输入 [1, 12, 1000]（12 导联 · 100 Hz · 10 秒），输出 logits(9 类) + pool_weights(导联注意力)。
+   · 运行时 onnxruntime-web 走 CDN 自动加载；如需完全离线，把 ORT_SOURCES 换成自托管目录
+     （目录内需含 ort.min.js 与 ort-wasm-simd-threaded.mjs / .wasm）。
+   ============================================================ */
+const MODEL_LEADS = 12;         // 模型固定 12 导联
+const MODEL_INPUT_LEN = 1000;   // 10 s @ 100 Hz
+const MODEL_FILES = ['deft_ecg_int8.onnx', 'deft_ecg.onnx'];
+const ORT_VERSION = '1.23.2';
+const ORT_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/onnxruntime-web@' + ORT_VERSION + '/dist/',
+  'https://unpkg.com/onnxruntime-web@' + ORT_VERSION + '/dist/'
+];
+// 用 file:// 直接双击打开时浏览器禁止读取模型文件，此时自动退回后端/演示
+const WEB_MODEL_ENABLED = (location.protocol === 'http:' || location.protocol === 'https:');
+
 const connStatus = $('#connStatus');
+const BADGE_ON  = 'color:var(--ok);background:rgba(104,133,172,.14)';
+const BADGE_OFF = 'color:var(--sand);background:rgba(185,196,216,.2)';
 let backendOnline = false;
+let webSession = null;      // ONNX 推理会话
+let webLoading = null;
+let webModelFile = '';
+let webModelError = '';
+let engineMode = 'demo';    // 'web' | 'backend' | 'demo'
+
+function setConnUI(online, label, hint, badge, badgeStyle){
+  connStatus.className = 'conn ' + (online ? 'online' : 'offline');
+  $('#connLabel').textContent = label;
+  $('#connHint').textContent = hint;
+  $('#modeBadge').textContent = badge;
+  $('#modeBadge').style.cssText = badgeStyle;
+}
+
+/* ---------- 动态加载 onnxruntime-web ---------- */
+function loadScriptOnce(src){
+  return new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = ()=>resolve();
+    s.onerror = ()=>reject(new Error('无法加载 '+src));
+    document.head.appendChild(s);
+  });
+}
+let ortPromise = null;
+function ensureOrt(){
+  if(window.ort) return Promise.resolve(window.ort);
+  if(!ortPromise){
+    ortPromise = (async ()=>{
+      let lastErr = null;
+      for(const base of ORT_SOURCES){
+        try{
+          await loadScriptOnce(base + 'ort.min.js');
+          const ort = window.ort;
+          if(!ort) throw new Error('onnxruntime-web 未就绪');
+          ort.env.wasm.wasmPaths = base;   // .mjs / .wasm 与加载器同源
+          ort.env.wasm.numThreads = 1;     // 单线程：无需 SharedArrayBuffer / COOP-COEP
+          ort.env.logLevel = 'error';
+          return ort;
+        }catch(e){ lastErr = e; }
+      }
+      ortPromise = null;
+      throw lastErr || new Error('onnxruntime-web 加载失败');
+    })();
+  }
+  return ortPromise;
+}
+
+/* ---------- 加载网页内置模型（首次约 12 MB） ---------- */
+function ensureWebModel(){
+  if(webSession) return Promise.resolve(webSession);
+  if(webLoading) return webLoading;
+  webLoading = (async ()=>{
+    if(!WEB_MODEL_ENABLED) throw new Error('需通过 http(s) 打开页面');
+    const ort = await ensureOrt();
+    let lastErr = null;
+    for(const file of MODEL_FILES){
+      try{
+        const resp = await fetch(file, {cache:'force-cache'});
+        if(!resp.ok) throw new Error(file+' HTTP '+resp.status);
+        const buf = await resp.arrayBuffer();
+        webSession = await ort.InferenceSession.create(buf, {executionProviders:['wasm']});
+        webModelFile = file;
+        return webSession;
+      }catch(e){ lastErr = e; }
+    }
+    throw lastErr || new Error('未找到模型文件 '+MODEL_FILES.join(' / '));
+  })();
+  webLoading.catch(()=>{ webLoading = null; });
+  return webLoading;
+}
+
+/* ---------- 后端探测（保留：部署到公网时仍可作为回退） ---------- */
 async function checkBackend(){
   try{
     const ctrl = new AbortController();
@@ -1969,24 +2064,278 @@ async function checkBackend(){
     if(r.ok){
       const data = await r.json().catch(()=>({}));
       backendOnline = true;
-      connStatus.className = 'conn online';
-      $('#connLabel').textContent = '已连接模型 · '+(data.model||'DEFT');
-      $('#connHint').textContent = (data.checkpoint ? '权重：'+data.checkpoint : '推理服务就绪');
-      $('#modeBadge').textContent = '模型在线';
-      $('#modeBadge').style.cssText = 'color:var(--ok);background:rgba(104,133,172,.14)';
-      return true;
+      return data;
     }
   }catch(e){ /* 未连接 */ }
   backendOnline = false;
-  connStatus.className = 'conn offline';
-  $('#connLabel').textContent = '未连接后端模型';
-  $('#connHint').textContent = '未检测到后端 → 演示模式；本地请访问 127.0.0.1:8000';
-  $('#modeBadge').textContent = '演示模式';
-  $('#modeBadge').style.cssText = 'color:var(--sand);background:rgba(185,196,216,.2)';
-  return false;
+  return null;
 }
-$('#retryConn').addEventListener('click', checkBackend);
-checkBackend();
+
+/* ---------- 引擎探测：内置模型 → 后端 → 演示 ---------- */
+async function detectEngines(){
+  webModelError = '';
+  setConnUI(false, '正在初始化推理引擎…', '优先加载网页内置 DEFT 模型', '连接中…', BADGE_OFF);
+
+  if(WEB_MODEL_ENABLED){
+    setConnUI(false, '正在加载网页内置模型…', '首次加载需下载模型文件（约 12 MB）…', '加载中…', BADGE_OFF);
+    try{
+      await ensureWebModel();
+      engineMode = 'web';
+      setConnUI(true, '已加载网页内置模型 · DEFT',
+        '权重：'+webModelFile+' · 浏览器内 ONNX 推理（12 导联 · 100 Hz）', '模型在线', BADGE_ON);
+      return engineMode;
+    }catch(e){
+      webModelError = (e && e.message) ? e.message : String(e);
+    }
+  } else {
+    webModelError = 'file:// 打开，浏览器禁止读取模型文件';
+  }
+
+  const info = await checkBackend();
+  if(info){
+    engineMode = 'backend';
+    setConnUI(true, '已连接后端模型 · '+(info.model || 'DEFT'),
+      (info.checkpoint ? '权重：'+info.checkpoint : '推理服务就绪'), '模型在线', BADGE_ON);
+    return engineMode;
+  }
+
+  engineMode = 'demo';
+  setConnUI(false, '未检测到可用模型',
+    (webModelError ? '内置模型不可用（'+webModelError+'）' : '未检测到模型')+' → 演示模式',
+    '演示模式', BADGE_OFF);
+  return engineMode;
+}
+$('#retryConn').addEventListener('click', detectEngines);
+detectEngines();
+
+/* ============================================================
+   8a-2. 浏览器端信号解析 + 推理（与后端 ecg_api.py 等价）
+   ============================================================ */
+const NPY_DTYPES = {
+  '<f4': Float32Array, '<f8': Float64Array, '<i2': Int16Array, '<i4': Int32Array,
+  '|u1': Uint8Array, '|i1': Int8Array
+};
+
+/* --- .npy 解析 --- */
+function parseNpy(buffer){
+  const dv = new DataView(buffer);
+  if(dv.byteLength < 10 || dv.getUint8(0) !== 0x93 || dv.getUint8(1) !== 0x4e) throw new Error('不是有效的 .npy 文件');
+  const major = dv.getUint8(6);
+  const headerLen = major === 1 ? dv.getUint16(8, true) : dv.getUint32(8, true);
+  const headerStart = major === 1 ? 10 : 12;
+  const header = new TextDecoder('latin1').decode(new Uint8Array(buffer, headerStart, headerLen));
+  const descr = (header.match(/'descr'\s*:\s*'([^']+)'/) || [])[1];
+  const fortran = /'fortran_order'\s*:\s*True/.test(header);
+  const shapeTxt = (header.match(/'shape'\s*:\s*\(([^)]*)\)/) || [])[1] || '';
+  const shape = shapeTxt.split(',').map(s=>s.trim()).filter(s=>s.length).map(Number);
+  const ctor = NPY_DTYPES[descr];
+  if(!ctor) throw new Error('暂不支持的数据类型 '+(descr||'?')+'（请用小端 float32 / float64 保存）');
+  const count = shape.reduce((a,b)=>a*b, 1);
+  const raw = new ctor(buffer, headerStart + headerLen, count);
+  const data = raw instanceof Float32Array ? raw : Float32Array.from(raw);
+  return {shape: shape, data: data, fortran: fortran};
+}
+
+/* --- .npz 解析（ZIP + 浏览器原生 DecompressionStream） --- */
+async function parseNpz(buffer){
+  const dv = new DataView(buffer);
+  const u8 = new Uint8Array(buffer);
+  const entries = [];
+  let off = 0;
+  while(off + 30 <= buffer.byteLength && dv.getUint32(off, true) === 0x04034b50){
+    const method = dv.getUint16(off + 8, true);
+    const csize = dv.getUint32(off + 18, true);
+    const nlen = dv.getUint16(off + 26, true);
+    const elen = dv.getUint16(off + 28, true);
+    const name = new TextDecoder().decode(u8.subarray(off + 30, off + 30 + nlen));
+    const dataStart = off + 30 + nlen + elen;
+    if(!csize) break;
+    entries.push({name:name, method:method, data:u8.subarray(dataStart, dataStart + csize)});
+    off = dataStart + csize;
+  }
+  if(!entries.length) throw new Error('不是有效的 .npz 文件');
+  const npy = entries.filter(e=>/\.npy$/i.test(e.name));
+  const pick = npy.find(e=>/signal|data|ecg|record/i.test(e.name)) || npy[0];
+  if(!pick) throw new Error('.npz 中没有 .npy 数据');
+  let raw = pick.data;
+  if(pick.method === 8){
+    if(typeof DecompressionStream === 'undefined') throw new Error('当前浏览器不支持 deflate 解压');
+    const stream = new Blob([pick.data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    raw = new Uint8Array(await new Response(stream).arrayBuffer());
+  } else if(pick.method !== 0){
+    throw new Error('不支持的压缩方式 '+pick.method);
+  }
+  return parseNpy(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
+}
+
+/* --- 二维数组 / CSV 解析 --- */
+function parseCsv(text){
+  const rows = [];
+  text.split(/\r?\n/).forEach(line=>{
+    const s = line.trim();
+    if(!s) return;
+    const nums = s.split(/[,\t;]+|\s+/).filter(x=>x.length).map(Number).filter(v=>Number.isFinite(v));
+    if(nums.length) rows.push(nums);
+  });
+  if(!rows.length) throw new Error('文件里没有可解析的数值');
+  const w = Math.min.apply(null, rows.map(r=>r.length));
+  return rows.map(r=>r.slice(0, w));
+}
+function npyToMatrix(np){
+  const shape = np.shape, data = np.data;
+  if(shape.length === 1) return [Array.from(data)];
+  if(shape.length !== 2) throw new Error('期望二维数组 [C×T]，实际是 '+shape.length+' 维');
+  const r = shape[0], c = shape[1];
+  const rows = [];
+  for(let i=0;i<r;i++){
+    const row = new Array(c);
+    for(let j=0;j<c;j++) row[j] = data[i*c + j];
+    rows.push(row);
+  }
+  return np.fortran ? rows[0].map((_, j)=>rows.map(rw=>rw[j])) : rows;
+}
+async function parseSignalFile(file){
+  const name = (file.name || '').toLowerCase();
+  const ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.')) : '';
+  if(ext === '.npy') return npyToMatrix(parseNpy(await file.arrayBuffer()));
+  if(ext === '.npz') return npyToMatrix(await parseNpz(await file.arrayBuffer()));
+  if(ext === '.csv' || ext === '.txt') return parseCsv(await file.text());
+  throw new Error('网页内置模型暂不支持 '+ext+'，请改用 .npy / .npz / .csv');
+}
+
+/* --- 统一到模型输入 [12, 1000] --- */
+function toModelTensor(matrix){
+  const r = matrix.length, c = r ? matrix[0].length : 0;
+  let leads, len, get;
+  if(r === MODEL_LEADS){ leads = r; len = c; get = (l,i)=>matrix[l][i]; }
+  else if(c === MODEL_LEADS){ leads = c; len = r; get = (l,i)=>matrix[i][l]; }
+  else throw new Error('需要 '+MODEL_LEADS+' 导联数据，实际 '+r+'×'+c+'，请检查文件形状');
+  if(len < 2) throw new Error('信号长度不足');
+  const out = new Float32Array(leads * MODEL_INPUT_LEN);
+  for(let l=0;l<leads;l++){
+    for(let i=0;i<MODEL_INPUT_LEN;i++){
+      const t = i * (len - 1) / (MODEL_INPUT_LEN - 1);
+      const i0 = Math.floor(t), i1 = Math.min(len - 1, i0 + 1), f = t - i0;
+      let v = get(l, i0) * (1 - f) + get(l, i1) * f;
+      if(!Number.isFinite(v)) v = 0;
+      out[l * MODEL_INPUT_LEN + i] = v;
+    }
+  }
+  return {data: out, leads: leads, sourceLen: len};
+}
+
+/* --- 心率估计（与 ecg_api.py 的同名算法一致） --- */
+function medianOf(arr){
+  if(!arr.length) return 0;
+  const b = arr.slice().sort((x,y)=>x-y), n = b.length;
+  return n % 2 ? b[(n-1)/2] : (b[n/2-1] + b[n/2]) / 2;
+}
+function estimateHeartRate(data, leads, fs){
+  try{
+    const T = MODEL_INPUT_LEN;
+    let best = 0, bestE = -Infinity;
+    for(let l=0;l<leads;l++){
+      let e = 0;
+      for(let i=0;i<T;i++){ const v = data[l*T+i]; e += v*v; }
+      if(e > bestE){ bestE = e; best = l; }
+    }
+    const x = new Float32Array(T);
+    for(let i=0;i<T;i++) x[i] = data[best*T + i];
+    const d = new Float32Array(T), energy = new Float32Array(T);
+    for(let i=0;i<T;i++){
+      const v = (i === 0) ? 0 : (x[i] - x[i-1]);   // 等价 np.diff(x, prepend=x[0])
+      d[i] = v; energy[i] = v * v;
+    }
+    const win = Math.max(3, Math.round(fs * 0.12));
+    const half = Math.floor(win / 2);
+    const prefix = new Float64Array(T + 1);
+    for(let i=0;i<T;i++) prefix[i+1] = prefix[i] + energy[i];
+    const ma = new Float32Array(T);
+    for(let i=0;i<T;i++){
+      const a = Math.max(0, i - half), b = Math.min(T, i - half + win);
+      ma[i] = (prefix[b] - prefix[a]) / Math.max(1, b - a);
+    }
+    const thr = 0.6 * medianOf(Array.from(ma)) + 1e-9;
+    const minDist = Math.max(2, Math.round(fs * 0.28));
+    const peakWin = Math.max(2, Math.round(fs * 0.05));
+    const peaks = [];
+    let i = 0;
+    while(i < T){
+      if(ma[i] > thr){
+        const j = Math.min(i + peakWin, T);
+        let p = i, bv = -Infinity;
+        for(let k=i;k<j;k++){ if(ma[k] > bv){ bv = ma[k]; p = k; } }
+        peaks.push(p);
+        i = p + minDist;
+      } else i++;
+    }
+    if(peaks.length < 2) return null;
+    const rr = [];
+    for(let k=1;k<peaks.length;k++){ const v = (peaks[k] - peaks[k-1]) / fs; if(v > 0.3 && v < 2.5) rr.push(v); }
+    if(!rr.length) return null;
+    const hr = 60 / medianOf(rr);
+    return (hr >= 24 && hr <= 220) ? Math.round(hr) : null;
+  }catch(e){ return null; }
+}
+
+/* --- 浏览器内推理 --- */
+async function runWebModel(file){
+  const fs = Number($('#samplingRate').value) || 100;
+  const matrix = await parseSignalFile(file);
+  const t = toModelTensor(matrix);
+  const ort = await ensureOrt();
+  const session = await ensureWebModel();
+  const feeds = {};
+  feeds[session.inputNames[0]] = new ort.Tensor('float32', t.data, [1, t.leads, MODEL_INPUT_LEN]);
+  const t0 = performance.now();
+  const out = await session.run(feeds);
+  const latency = Math.round(performance.now() - t0);
+
+  const logitsT = out.logits || out[session.outputNames[0]];
+  const pwT = out.pool_weights || out[session.outputNames[1]];
+  const logits = logitsT ? logitsT.data : [];
+  const probs = LABELS.map((_, i)=>{
+    const z = Number(logits[i] || 0);
+    return 1 / (1 + Math.exp(-z));           // 多标签：sigmoid，与后端一致
+  });
+
+  let leadImportance = null;
+  if(pwT && t.leads > 0){
+    const pw = pwT.data, patches = Math.floor(pw.length / t.leads);
+    if(patches >= 1){
+      leadImportance = [];
+      for(let l=0;l<t.leads;l++){
+        let s = 0;
+        for(let p=0;p<patches;p++) s += pw[l*patches + p];
+        leadImportance.push(s / patches);
+      }
+      const tot = leadImportance.reduce((a,b)=>a+b, 0) || 1;
+      leadImportance = leadImportance.map(v=>v / tot);
+    }
+  }
+
+  return {
+    demo: false, mode: 'web', probs: probs,
+    heartRate: estimateHeartRate(t.data, t.leads, fs),
+    samplingRate: fs, numLeads: t.leads,
+    duration: Number((t.sourceLen / Math.max(1, fs)).toFixed(2)),
+    leadImportance: leadImportance, latency: latency, modelFile: webModelFile
+  };
+}
+
+/* --- 后端推理 --- */
+async function runViaBackend(file){
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('num_leads', $('#numLeads').value);
+  fd.append('sampling_rate', $('#samplingRate').value);
+  const r = await fetch(API_BASE + '/api/predict', {method:'POST', body: fd});
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  return {demo: !!data.demo, mode: 'backend', probs: data.probabilities,
+    heartRate: data.heart_rate, samplingRate: data.sampling_rate,
+    numLeads: data.num_leads, duration: data.duration_sec};
+}
 
 /* 多标签类别（CPSC2018 官方 9 类，顺序与后端一致） */
 const LABELS = [
@@ -2035,7 +2384,11 @@ function renderResult(res){
   const banner = $('#resultBanner');
   if(res.demo){
     banner.className = 'result-banner warn';
-    $('#bannerText').textContent = '演示模式：未连接后端模型，以下为浏览器内模拟推理结果。';
+    $('#bannerText').textContent = '演示模式：未接入模型，以下为浏览器内模拟推理结果，仅供界面演示。';
+  } else if(res.mode === 'web'){
+    banner.className = 'result-banner ok';
+    $('#bannerText').textContent = '模型在线：结果由网页内置 DEFT 模型（ONNX'+
+      (res.modelFile ? ' · '+res.modelFile : '')+(res.latency ? ' · '+res.latency+' ms' : '')+'）在浏览器内推理产生。';
   } else {
     banner.className = 'result-banner ok';
     $('#bannerText').textContent = '模型在线：结果由 DEFT 后端推理产生。';
@@ -2070,6 +2423,7 @@ function renderResult(res){
     numLeads: res.numLeads || Number($('#numLeads').value),
     duration: res.duration || null,
     demo: !!res.demo,
+    mode: res.mode || (res.demo ? 'demo' : 'backend'),
     verdictKey: verdictKey,
     verdictName: LABELS[best].name,
     confidence: res.probs[best],
@@ -2082,31 +2436,40 @@ function renderResult(res){
 }
 
 $('#runBtn').addEventListener('click', async ()=>{
-  if(!currentFile && !backendOnline){
-    renderResult(runDemo());
-    return;
-  }
-  if(backendOnline && currentFile){
-    const btn = $('#runBtn'); const old = btn.innerHTML;
+  const btn = $('#runBtn'); const old = btn.innerHTML;
+
+  // 无文件 → 演示样本（保持原有行为）
+  if(!currentFile){ renderResult(runDemo()); return; }
+
+  // 1) 网页内置模型（首选）
+  if(webSession){
     btn.innerHTML = '分析中…'; btn.disabled = true;
     try{
-      const fd = new FormData();
-      fd.append('file', currentFile);
-      fd.append('num_leads', $('#numLeads').value);
-      fd.append('sampling_rate', $('#samplingRate').value);
-      const r = await fetch(API_BASE + '/api/predict', {method:'POST', body:fd});
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const data = await r.json();
-      renderResult({demo:!!data.demo, probs:data.probabilities,
-        heartRate:data.heart_rate, samplingRate:data.sampling_rate,
-        numLeads:data.num_leads, duration:data.duration_sec});
+      renderResult(await runWebModel(currentFile));
+      return;
     }catch(e){
-      renderResult(runDemo());
+      webModelError = (e && e.message) ? e.message : String(e);
+      if(!backendOnline) setConnUI(false, '内置模型推理失败',
+        webModelError + ' → 已回退演示模式', '演示模式', BADGE_OFF);
     }finally{
       btn.innerHTML = old; btn.disabled = false;
     }
-    return;
   }
+
+  // 2) 后端模型（回退）
+  if(backendOnline){
+    btn.innerHTML = '分析中…'; btn.disabled = true;
+    try{
+      renderResult(await runViaBackend(currentFile));
+      return;
+    }catch(e){
+      /* 后端失败 → 演示 */
+    }finally{
+      btn.innerHTML = old; btn.disabled = false;
+    }
+  }
+
+  // 3) 演示模式（兜底）
   renderResult(runDemo());
 });
 
@@ -2189,7 +2552,8 @@ function exportRecord(rec){
   L.push('时长     : '+(rec.duration?rec.duration+' 秒':'—'));
   L.push('心率     : '+(rec.heartRate?rec.heartRate+' bpm':'—'));
   L.push('节律     : '+(rec.rhythm||'—'));
-  L.push('推理模式 : '+(rec.demo?'演示模式':'模型在线'));
+  L.push('推理模式 : '+(rec.demo ? '演示模式'
+    : (rec.mode === 'web' ? '模型在线（网页内置 ONNX）' : '模型在线（后端服务）')));
   L.push('');
   L.push('诊断结果（CPSC2018 九类 · 阳性阈值 0.5）：');
   const bestIdx = rec.probs.indexOf(Math.max(...rec.probs));
