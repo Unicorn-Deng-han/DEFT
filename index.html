@@ -795,8 +795,8 @@ html.js .reveal.in{opacity:1;transform:none}
   <div class="spacer"></div>
   <nav class="topnav" id="topnav">
     <a href="#home" data-nav="home">首页</a>
-    <a href="#features" data-nav="features">功能页</a>
     <a href="#analysis" data-nav="analysis">智能分析</a>
+    <a href="#features" data-nav="features">功能页</a>
     <a href="#about" data-nav="about">About us</a>
   </nav>
   <div class="actions">
@@ -1022,134 +1022,6 @@ html.js .reveal.in{opacity:1;transform:none}
     </div>
   </section>
 
-  <!-- FEATURES -->
-  <section id="features">
-    <div class="wrap">
-      <div class="section-head reveal">
-        <span class="eyebrow">功能页 · Features</span>
-        <h2>八项能力，<em>逐一对齐论文</em></h2>
-        <p class="lead">本页回答一个问题：<b>相比只做时域或只做频域的方法，DEFT 多做了什么、强在哪里。</b>八项能力逐条对应论文的方法贡献与实验证据，并用「↔」标注「我们 vs 他人」的差异；点击各卡片可跳到 About us 查看对应细节。</p>
-      </div>
-      <div class="cards-grid">
-        <a class="card reveal" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><path d="M3 18h4l2-6 4 12 4-8 2 2h3" opacity=".45"/></svg></span>
-          <span class="card-bd">
-            <h3>双域融合建模</h3>
-            <p>时域波形与多分辨率频谱（db4 MRA · J=4）双路并行，形态与谱演化互补，两类信息都不被牺牲。</p>
-            <span class="tag">论文核心① · Dual-domain</span>
-            <span class="card-vs">vs 仅时域 / 仅频域单流</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v4M17.5 10v4M10 6.5h4M10 17.5h4"/></svg></span>
-          <span class="card-bd">
-            <h3>严格共配准网格</h3>
-            <p>共享 lead-time patch 网格，同一位置的时频 token 一一对应，在已知生理坐标上对齐后再交互。</p>
-            <span class="tag">论文核心② · Co-registration</span>
-            <span class="card-vs">vs 特征级拼接 / 隐式对齐</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16"/></svg></span>
-          <span class="card-bd">
-            <h3>双向交叉注意力融合</h3>
-            <p>相对位置偏置 + 门控残差 + 交互 FFN，让时频信息在已知坐标上双向交换、逐层更新。</p>
-            <span class="tag">论文核心③ · Cross-attention</span>
-            <span class="card-vs">vs 一般交叉注意力</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
-          <span class="card-bd">
-            <h3>能量-注意力可解释</h3>
-            <p>能量—注意力一致性约束，让聚焦对齐生理能量分布，心搏覆盖 100%，决策非黑盒。</p>
-            <span class="tag">可解释性 · Interpretability</span>
-            <span class="card-vs">vs 注意力弥散 / 黑盒</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16M9 4v16"/><path d="M12 9v6M14.5 9v6M12 12h3"/></svg></span>
-          <span class="card-bd">
-            <h3>掩码自监督预训练</h3>
-            <p>随机 + 结构化掩码重建（时域 patch 与 MRA 描述符），在大规模无标注语料上学习心电先验。</p>
-            <span class="tag">预训练 · Self-supervised</span>
-            <span class="card-vs">vs 从零监督训练</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
-          <span class="card-bd">
-            <h3>抗噪与导联鲁棒</h3>
-            <p>测试期注入基线漂移/工频/肌电噪声与随机丢导联，DEFT 保持最平缓的性能衰减。</p>
-            <span class="tag">稳健性 · Robustness</span>
-            <span class="card-vs">vs 时域/频域基线衰减更快</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7 11l9.5-5M7 13l9.5 5"/></svg></span>
-          <span class="card-bd">
-            <h3>跨源零样本泛化</h3>
-            <p>训练于 A、直接测试于 B（PTB-XL / CPSC2018 / CSN 互迁），平均退化最小、换设备也能用。</p>
-            <span class="tag">泛化 · Generalization</span>
-            <span class="card-vs">vs 单一数据集过拟合</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="#about">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9 22l8.5-11.5H12L13 2z"/></svg></span>
-          <span class="card-bd">
-            <h3>轻量高效 + 多模态</h3>
-            <p>9.14M 参数 / 2.8 GFLOPs，INT8 量化几乎无损；统一框架覆盖 ECG 与 EEG 多模态扩展。</p>
-            <span class="tag">工程落地 · Deployment</span>
-            <span class="card-vs">vs 大型基础模型</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-      </div>
-
-      <div class="arch reveal" style="margin-top:40px">
-        <div class="arch-title" style="margin-bottom:16px">
-          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg></span>
-          <div><b>技术规格</b><br><span>Technical Specifications · DEFT 模型配置</span></div>
-        </div>
-        <div class="spec-grid">
-          <div class="spec"><div class="k">小波基</div><div class="v">db4</div></div>
-          <div class="spec"><div class="k">MRA 层数</div><div class="v">J = 4</div></div>
-          <div class="spec"><div class="k">Patch 大小 / 步长</div><div class="v">16 / 16</div></div>
-          <div class="spec"><div class="k">模型宽度</div><div class="v">256</div></div>
-          <div class="spec"><div class="k">编码器层数</div><div class="v">4 × 2 流</div></div>
-          <div class="spec"><div class="k">注意力头数</div><div class="v">8</div></div>
-          <div class="spec"><div class="k">参数量</div><div class="v">9.14M</div></div>
-          <div class="spec"><div class="k">计算量</div><div class="v">2.8 G</div></div>
-        </div>
-      </div>
-
-      <div class="scenario-grid reveal">
-        <div class="scenario">
-          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>
-          <b>远程心电筛查</b>
-          <p>面向基层与远程医疗场景，秒级返回九类心律失常预测，辅助大规模人群的初步分诊。</p>
-        </div>
-        <div class="scenario">
-          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><rect x="2" y="4" width="20" height="16" rx="3" opacity=".4"/></svg></span>
-          <b>门诊辅助诊断</b>
-          <p>为心内科门诊提供可解释的注意力定位，帮助医师快速锁定可疑波形片段，提升读图效率。</p>
-        </div>
-        <div class="scenario">
-          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a4 4 0 0 1 4 4M12 4a4 4 0 0 0-4 4M4 12h16M8 20h8M12 8v12"/></svg></span>
-          <b>可穿戴与科研</b>
-          <p>轻量架构（9.14M 参数）适配可穿戴设备与临床科研，支持 ECG / EEG 多模态统一扩展。</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ANALYSIS -->
   <section id="analysis">
     <div class="wrap">
@@ -1314,6 +1186,134 @@ html.js .reveal.in{opacity:1;transform:none}
         </div>
 
         <div class="rec-list" id="historyList"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="eyebrow">功能页 · Features</span>
+        <h2>八项能力，<em>逐一对齐论文</em></h2>
+        <p class="lead">本页回答一个问题：<b>相比只做时域或只做频域的方法，DEFT 多做了什么、强在哪里。</b>八项能力逐条对应论文的方法贡献与实验证据，并用「↔」标注「我们 vs 他人」的差异；点击各卡片可跳到 About us 查看对应细节。</p>
+      </div>
+      <div class="cards-grid">
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><path d="M3 18h4l2-6 4 12 4-8 2 2h3" opacity=".45"/></svg></span>
+          <span class="card-bd">
+            <h3>双域融合建模</h3>
+            <p>时域波形与多分辨率频谱（db4 MRA · J=4）双路并行，形态与谱演化互补，两类信息都不被牺牲。</p>
+            <span class="tag">论文核心① · Dual-domain</span>
+            <span class="card-vs">vs 仅时域 / 仅频域单流</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v4M17.5 10v4M10 6.5h4M10 17.5h4"/></svg></span>
+          <span class="card-bd">
+            <h3>严格共配准网格</h3>
+            <p>共享 lead-time patch 网格，同一位置的时频 token 一一对应，在已知生理坐标上对齐后再交互。</p>
+            <span class="tag">论文核心② · Co-registration</span>
+            <span class="card-vs">vs 特征级拼接 / 隐式对齐</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16"/></svg></span>
+          <span class="card-bd">
+            <h3>双向交叉注意力融合</h3>
+            <p>相对位置偏置 + 门控残差 + 交互 FFN，让时频信息在已知坐标上双向交换、逐层更新。</p>
+            <span class="tag">论文核心③ · Cross-attention</span>
+            <span class="card-vs">vs 一般交叉注意力</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
+          <span class="card-bd">
+            <h3>能量-注意力可解释</h3>
+            <p>能量—注意力一致性约束，让聚焦对齐生理能量分布，心搏覆盖 100%，决策非黑盒。</p>
+            <span class="tag">可解释性 · Interpretability</span>
+            <span class="card-vs">vs 注意力弥散 / 黑盒</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16M9 4v16"/><path d="M12 9v6M14.5 9v6M12 12h3"/></svg></span>
+          <span class="card-bd">
+            <h3>掩码自监督预训练</h3>
+            <p>随机 + 结构化掩码重建（时域 patch 与 MRA 描述符），在大规模无标注语料上学习心电先验。</p>
+            <span class="tag">预训练 · Self-supervised</span>
+            <span class="card-vs">vs 从零监督训练</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="card-bd">
+            <h3>抗噪与导联鲁棒</h3>
+            <p>测试期注入基线漂移/工频/肌电噪声与随机丢导联，DEFT 保持最平缓的性能衰减。</p>
+            <span class="tag">稳健性 · Robustness</span>
+            <span class="card-vs">vs 时域/频域基线衰减更快</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7 11l9.5-5M7 13l9.5 5"/></svg></span>
+          <span class="card-bd">
+            <h3>跨源零样本泛化</h3>
+            <p>训练于 A、直接测试于 B（PTB-XL / CPSC2018 / CSN 互迁），平均退化最小、换设备也能用。</p>
+            <span class="tag">泛化 · Generalization</span>
+            <span class="card-vs">vs 单一数据集过拟合</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9 22l8.5-11.5H12L13 2z"/></svg></span>
+          <span class="card-bd">
+            <h3>轻量高效 + 多模态</h3>
+            <p>9.14M 参数 / 2.8 GFLOPs，INT8 量化几乎无损；统一框架覆盖 ECG 与 EEG 多模态扩展。</p>
+            <span class="tag">工程落地 · Deployment</span>
+            <span class="card-vs">vs 大型基础模型</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+      </div>
+
+      <div class="arch reveal" style="margin-top:40px">
+        <div class="arch-title" style="margin-bottom:16px">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 9v12"/></svg></span>
+          <div><b>技术规格</b><br><span>Technical Specifications · DEFT 模型配置</span></div>
+        </div>
+        <div class="spec-grid">
+          <div class="spec"><div class="k">小波基</div><div class="v">db4</div></div>
+          <div class="spec"><div class="k">MRA 层数</div><div class="v">J = 4</div></div>
+          <div class="spec"><div class="k">Patch 大小 / 步长</div><div class="v">16 / 16</div></div>
+          <div class="spec"><div class="k">模型宽度</div><div class="v">256</div></div>
+          <div class="spec"><div class="k">编码器层数</div><div class="v">4 × 2 流</div></div>
+          <div class="spec"><div class="k">注意力头数</div><div class="v">8</div></div>
+          <div class="spec"><div class="k">参数量</div><div class="v">9.14M</div></div>
+          <div class="spec"><div class="k">计算量</div><div class="v">2.8 G</div></div>
+        </div>
+      </div>
+
+      <div class="scenario-grid reveal">
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></span>
+          <b>远程心电筛查</b>
+          <p>面向基层与远程医疗场景，秒级返回九类心律失常预测，辅助大规模人群的初步分诊。</p>
+        </div>
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><rect x="2" y="4" width="20" height="16" rx="3" opacity=".4"/></svg></span>
+          <b>门诊辅助诊断</b>
+          <p>为心内科门诊提供可解释的注意力定位，帮助医师快速锁定可疑波形片段，提升读图效率。</p>
+        </div>
+        <div class="scenario">
+          <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a4 4 0 0 1 4 4M12 4a4 4 0 0 0-4 4M4 12h16M8 20h8M12 8v12"/></svg></span>
+          <b>可穿戴与科研</b>
+          <p>轻量架构（9.14M 参数）适配可穿戴设备与临床科研，支持 ECG / EEG 多模态统一扩展。</p>
+        </div>
       </div>
     </div>
   </section>
@@ -1625,8 +1625,8 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="foot-col">
           <b>平台</b>
           <a href="#home">首页</a>
-          <a href="#features">功能页</a>
           <a href="#analysis">智能分析</a>
+          <a href="#features">功能页</a>
         </div>
         <div class="foot-col">
           <b>资源</b>
@@ -1685,7 +1685,7 @@ $('#mobileHamburger').addEventListener('click', ()=>{
 /* ============================================================
    2. 页面切换（点击导航切换页面）
    ============================================================ */
-const pages = ['home','features','analysis','about'];
+const pages = ['home','analysis','features','about'];
 const topLinks = $$('.topnav a[data-nav]');
 
 function showPage(id){
