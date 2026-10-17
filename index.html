@@ -343,6 +343,9 @@ section.active{display:block}
 .card .card-bd p{margin-top:6px;font-size:13.5px;color:var(--ink-3);line-height:1.6}
 .card .card-bd .tag{display:inline-block;margin-top:12px;font-size:11px;font-weight:600;color:var(--brand-600);
   background:var(--brand-100);padding:3px 10px;border-radius:99px}
+.card .card-bd .card-vs{display:inline-block;margin-top:8px;font-size:11px;font-weight:600;color:var(--brand-600);
+  background:var(--brand-50);border:1px dashed var(--brand-300);padding:3px 10px;border-radius:99px}
+.card .card-bd .card-vs::before{content:"↔ ";color:var(--brand-400)}
 .card .go{position:absolute;top:22px;right:20px;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
   color:var(--ink-4);opacity:0;transform:translate(-6px,6px);transition:all .35s var(--ease)}
 .card:hover .go{opacity:1;transform:none;color:var(--brand-700);background:var(--brand-50)}
@@ -646,6 +649,17 @@ tbody td.num{font-family:"Inter",sans-serif;font-weight:600}
 .edu-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-glow)}
 .edu-media{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,var(--brand-100),var(--brand-50));overflow:hidden}
 .edu-media img,.edu-media video,.edu-media iframe{width:100%;height:100%;object-fit:cover;display:block;background:var(--brand-100)}
+/* 视频点击播放门面（点击前不加载 iframe，避免卡顿） */
+.edu-facade{position:absolute;inset:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;cursor:pointer;border:0;background:linear-gradient(135deg,var(--brand-600),var(--brand-800));color:#eaf0f8;
+  padding:16px;text-align:center}
+.edu-facade:hover{background:linear-gradient(135deg,var(--brand-500),var(--brand-700))}
+.edu-play{width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;
+  transition:transform .3s var(--ease);box-shadow:0 10px 26px rgba(0,0,0,.25)}
+.edu-play svg{width:24px;height:24px;margin-left:3px}
+.edu-facade:hover .edu-play{transform:scale(1.12)}
+.edu-facade .edu-facade-t{font-size:14px;font-weight:650;letter-spacing:.01em}
+.edu-facade .edu-facade-s{font-size:11.5px;opacity:.85}
 .edu-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
   padding:20px;text-align:center;color:var(--ink-3)}
 .edu-fallback[hidden]{display:none}
@@ -906,9 +920,11 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="edu-grid">
           <div class="edu-card">
             <div class="edu-media">
-              <iframe src="https://player.bilibili.com/player.html?bvid=BV1Po4y1Q7m8&page=1&high_quality=1&danmaku=0"
-                      title="心电图基础 · 心电图机制与心脏传导系统" allowfullscreen loading="lazy"
-                      scrolling="no" style="border:0"></iframe>
+              <button class="edu-facade" data-src="https://player.bilibili.com/player.html?bvid=BV1Po4y1Q7m8&page=1&high_quality=1&danmaku=0&autoplay=1" aria-label="心电图基础 · 心电图机制与心脏传导系统">
+                <span class="edu-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="edu-facade-t">心电原理 · P-QRS-T 波形</span>
+                <span class="edu-facade-s">点击播放 · 视频按需加载，不拖慢页面</span>
+              </button>
             </div>
             <div class="edu-body">
               <b>心电原理 · P-QRS-T 波形</b>
@@ -922,9 +938,11 @@ html.js .reveal.in{opacity:1;transform:none}
 
           <div class="edu-card">
             <div class="edu-media">
-              <iframe src="https://player.bilibili.com/player.html?bvid=BV1VQ4y1m79n&page=1&high_quality=1&danmaku=0"
-                      title="心房颤动科普视频" allowfullscreen loading="lazy"
-                      scrolling="no" style="border:0"></iframe>
+              <button class="edu-facade" data-src="https://player.bilibili.com/player.html?bvid=BV1VQ4y1m79n&page=1&high_quality=1&danmaku=0&autoplay=1" aria-label="心房颤动科普视频">
+                <span class="edu-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="edu-facade-t">心房颤动（房颤）</span>
+                <span class="edu-facade-s">点击播放 · 视频按需加载，不拖慢页面</span>
+              </button>
             </div>
             <div class="edu-body">
               <b>心房颤动（房颤）</b>
@@ -938,9 +956,11 @@ html.js .reveal.in{opacity:1;transform:none}
 
           <div class="edu-card">
             <div class="edu-media">
-              <iframe src="https://player.bilibili.com/player.html?bvid=BV1ix4y1b7B2&page=1&high_quality=1&danmaku=0"
-                      title="心肌梗死科普视频" allowfullscreen loading="lazy"
-                      scrolling="no" style="border:0"></iframe>
+              <button class="edu-facade" data-src="https://player.bilibili.com/player.html?bvid=BV1ix4y1b7B2&page=1&high_quality=1&danmaku=0&autoplay=1" aria-label="心肌梗死科普视频">
+                <span class="edu-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="edu-facade-t">心肌梗死（心脏病发作）</span>
+                <span class="edu-facade-s">点击播放 · 视频按需加载，不拖慢页面</span>
+              </button>
             </div>
             <div class="edu-body">
               <b>心肌梗死（心脏病发作）</b>
@@ -954,9 +974,11 @@ html.js .reveal.in{opacity:1;transform:none}
 
           <div class="edu-card">
             <div class="edu-media">
-              <iframe src="https://player.bilibili.com/player.html?bvid=BV1Vt8qz9EyH&page=1&high_quality=1&danmaku=0"
-                      title="束支传导阻滞科普视频" allowfullscreen loading="lazy"
-                      scrolling="no" style="border:0"></iframe>
+              <button class="edu-facade" data-src="https://player.bilibili.com/player.html?bvid=BV1Vt8qz9EyH&page=1&high_quality=1&danmaku=0&autoplay=1" aria-label="束支传导阻滞科普视频">
+                <span class="edu-play"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+                <span class="edu-facade-t">束支传导阻滞</span>
+                <span class="edu-facade-s">点击播放 · 视频按需加载，不拖慢页面</span>
+              </button>
             </div>
             <div class="edu-body">
               <b>束支传导阻滞</b>
@@ -1005,79 +1027,87 @@ html.js .reveal.in{opacity:1;transform:none}
     <div class="wrap">
       <div class="section-head reveal">
         <span class="eyebrow">功能页 · Features</span>
-        <h2>一项技术，<em>八重能力</em></h2>
-        <p class="lead">从双域融合建模到可解释注意力，DEFT 将临床医师的「看波形 + 看节律」双重视角，沉淀为可复用的智能分析能力。</p>
+        <h2>八项能力，<em>逐一对齐论文</em></h2>
+        <p class="lead">本页回答一个问题：<b>相比只做时域或只做频域的方法，DEFT 多做了什么、强在哪里。</b>八项能力逐条对应论文的方法贡献与实验证据，并用「↔」标注「我们 vs 他人」的差异；点击各卡片可跳到 About us 查看对应细节。</p>
       </div>
       <div class="cards-grid">
-        <a class="card reveal" href="https://physionet.org/content/ptb-xl/1.0.3/" target="_blank" rel="noopener">
+        <a class="card reveal" href="#about">
           <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2-6 4 12 4-8 2 2h3"/><path d="M3 18h4l2-6 4 12 4-8 2 2h3" opacity=".45"/></svg></span>
           <span class="card-bd">
             <h3>双域融合建模</h3>
-            <p>时域波形与多分辨率频谱证据在同一 patch 网格上严格对齐，协同建模，而非单一视角各自为战。</p>
-            <span class="tag">Dual-domain</span>
+            <p>时域波形与多分辨率频谱（db4 MRA · J=4）双路并行，形态与谱演化互补，两类信息都不被牺牲。</p>
+            <span class="tag">论文核心① · Dual-domain</span>
+            <span class="card-vs">vs 仅时域 / 仅频域单流</span>
           </span>
           <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
         </a>
-        <a class="card reveal d1" href="https://physionet.org/content/mimic-iv-ecg/1.0/" target="_blank" rel="noopener">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h4l3-8 3 12 3-8 3 4h0"/><path d="M3 20h18" opacity=".5"/></svg></span>
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v4M17.5 10v4M10 6.5h4M10 17.5h4"/></svg></span>
           <span class="card-bd">
-            <h3>多分辨率小波分解</h3>
-            <p>db4 离散小波 J=4 层，提取局部能量、尺度比与跨导联同步性三类生理可解释描述符。</p>
-            <span class="tag">MRA · db4</span>
+            <h3>严格共配准网格</h3>
+            <p>共享 lead-time patch 网格，同一位置的时频 token 一一对应，在已知生理坐标上对齐后再交互。</p>
+            <span class="tag">论文核心② · Co-registration</span>
+            <span class="card-vs">vs 特征级拼接 / 隐式对齐</span>
           </span>
           <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
         </a>
-        <a class="card reveal" href="https://physionet.org/content/ecg-arrhythmia/1.0.0/" target="_blank" rel="noopener">
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16"/></svg></span>
+          <span class="card-bd">
+            <h3>双向交叉注意力融合</h3>
+            <p>相对位置偏置 + 门控残差 + 交互 FFN，让时频信息在已知坐标上双向交换、逐层更新。</p>
+            <span class="tag">论文核心③ · Cross-attention</span>
+            <span class="card-vs">vs 一般交叉注意力</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
           <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9 17 7M7 17l-2.1 2.1"/></svg></span>
           <span class="card-bd">
-            <h3>交互式注意力可解释</h3>
-            <p>能量—注意力一致性约束，引导模型聚焦临床相关的瞬态异常区，注意力可视化对齐专家判断。</p>
-            <span class="tag">Interpretability</span>
+            <h3>能量-注意力可解释</h3>
+            <p>能量—注意力一致性约束，让聚焦对齐生理能量分布，心搏覆盖 100%，决策非黑盒。</p>
+            <span class="tag">可解释性 · Interpretability</span>
+            <span class="card-vs">vs 注意力弥散 / 黑盒</span>
           </span>
           <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
         </a>
-        <a class="card reveal d1" href="https://moody-challenge.physionet.org/2021/" target="_blank" rel="noopener">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
-          <span class="card-bd">
-            <h3>抗噪与导联鲁棒</h3>
-            <p>测试期注入临床噪声与随机导联缺失，DEFT 仍保持最平缓的性能衰减，稳健性显著优于基线。</p>
-            <span class="tag">Robustness</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal" href="https://www.physionet.org/content/ptbdb/1.0.0/" target="_blank" rel="noopener">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 18 0M3 12a9 9 0 0 1 18 0"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></span>
-          <span class="card-bd">
-            <h3>跨源零样本泛化</h3>
-            <p>在 PTB-XL / CPSC2018 / CSN 队列间直接迁移评估，DEFT 平均退化最小，跨源迁移更稳定。</p>
-            <span class="tag">Generalization</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="https://physionet.org/content/mimic-iv-ecg/1.0/" target="_blank" rel="noopener">
+        <a class="card reveal" href="#about">
           <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M4 9h16M9 4v16"/><path d="M12 9v6M14.5 9v6M12 12h3"/></svg></span>
           <span class="card-bd">
             <h3>掩码自监督预训练</h3>
-            <p>在 MIMIC-IV-ECG 大规模无标注语料上以随机 + 结构化掩码重建预训练，显著提升小样本下游表现。</p>
-            <span class="tag">Self-supervised</span>
+            <p>随机 + 结构化掩码重建（时域 patch 与 MRA 描述符），在大规模无标注语料上学习心电先验。</p>
+            <span class="tag">预训练 · Self-supervised</span>
+            <span class="card-vs">vs 从零监督训练</span>
           </span>
           <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
         </a>
-        <a class="card reveal" href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">
+        <a class="card reveal d1" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9 12l2 2 4-4"/></svg></span>
+          <span class="card-bd">
+            <h3>抗噪与导联鲁棒</h3>
+            <p>测试期注入基线漂移/工频/肌电噪声与随机丢导联，DEFT 保持最平缓的性能衰减。</p>
+            <span class="tag">稳健性 · Robustness</span>
+            <span class="card-vs">vs 时域/频域基线衰减更快</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal" href="#about">
+          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="5" r="2.5"/><circle cx="19" cy="19" r="2.5"/><path d="M7 11l9.5-5M7 13l9.5 5"/></svg></span>
+          <span class="card-bd">
+            <h3>跨源零样本泛化</h3>
+            <p>训练于 A、直接测试于 B（PTB-XL / CPSC2018 / CSN 互迁），平均退化最小、换设备也能用。</p>
+            <span class="tag">泛化 · Generalization</span>
+            <span class="card-vs">vs 单一数据集过拟合</span>
+          </span>
+          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+        </a>
+        <a class="card reveal d1" href="#about">
           <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9 22l8.5-11.5H12L13 2z"/></svg></span>
           <span class="card-bd">
-            <h3>轻量高效架构</h3>
-            <p>约 9.5M 参数 / 2.8 GFLOPs，落于精度—成本帕累托前沿，优于更重的分解式基线。</p>
-            <span class="tag">9.5M · 2.8G</span>
-          </span>
-          <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
-        </a>
-        <a class="card reveal d1" href="https://isip.piconepress.com/projects/tuh_eeg/" target="_blank" rel="noopener">
-          <span class="card-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M7 15c1.5-3 2.5-3 4 0s2.5 3 4 0 2.5-3 4 0" opacity=".8"/></svg></span>
-          <span class="card-bd">
-            <h3>多模态扩展能力</h3>
-            <p>统一双域框架覆盖 ECG 与 EEG，癫痫事件定位指向准确率 100%，可扩展至更广临床模态。</p>
-            <span class="tag">ECG + EEG</span>
+            <h3>轻量高效 + 多模态</h3>
+            <p>9.14M 参数 / 2.8 GFLOPs，INT8 量化几乎无损；统一框架覆盖 ECG 与 EEG 多模态扩展。</p>
+            <span class="tag">工程落地 · Deployment</span>
+            <span class="card-vs">vs 大型基础模型</span>
           </span>
           <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
         </a>
@@ -1095,7 +1125,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="spec"><div class="k">模型宽度</div><div class="v">256</div></div>
           <div class="spec"><div class="k">编码器层数</div><div class="v">4 × 2 流</div></div>
           <div class="spec"><div class="k">注意力头数</div><div class="v">8</div></div>
-          <div class="spec"><div class="k">参数量</div><div class="v">≈ 9.5M</div></div>
+          <div class="spec"><div class="k">参数量</div><div class="v">9.14M</div></div>
           <div class="spec"><div class="k">计算量</div><div class="v">2.8 G</div></div>
         </div>
       </div>
@@ -1114,7 +1144,7 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="scenario">
           <span class="sc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a4 4 0 0 1 4 4M12 4a4 4 0 0 0-4 4M4 12h16M8 20h8M12 8v12"/></svg></span>
           <b>可穿戴与科研</b>
-          <p>轻量架构（9.5M 参数）适配可穿戴设备与临床科研，支持 ECG / EEG 多模态统一扩展。</p>
+          <p>轻量架构（9.14M 参数）适配可穿戴设备与临床科研，支持 ECG / EEG 多模态统一扩展。</p>
         </div>
       </div>
     </div>
@@ -2764,6 +2794,23 @@ heroStatEls().forEach((b,i)=>{ if(homeStats[i]) b.dataset.count = homeStats[i][0
 // 立即给首页数字赋值，避免未滚动时为空
 window.addEventListener('load', ()=>{
   heroStatEls().forEach(b=>{ if(b.dataset.count) countUp(b); });
+});
+
+/* ============================================================
+   10. 科普视频 · 点击播放门面（点击前不加载 iframe，避免卡顿）
+   ============================================================ */
+$$('.edu-facade').forEach(facade=>{
+  facade.addEventListener('click', ()=>{
+    const src = facade.dataset.src;
+    if(!src) return;
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.title = facade.getAttribute('aria-label') || '科普视频';
+    iframe.setAttribute('allowfullscreen','');
+    iframe.setAttribute('scrolling','no');
+    iframe.style.cssText = 'border:0;width:100%;height:100%;display:block';
+    facade.replaceWith(iframe);
+  });
 });
 
 })();
