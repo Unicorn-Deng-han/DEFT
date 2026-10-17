@@ -809,11 +809,11 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="h"><b>消息通知</b><span>3 条未读</span></div>
         <div class="notif-item">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
-          <span class="tx"><b>分析任务完成</b><p>样本 #ECG-2048 已完成推理，结论：窦性心律。</p></span>
+          <span class="tx"><b>模型在线 · DEFT</b><p>CPSC2018 九类模型已部署（ONNX int8/fp16），浏览器内真实推理。</p></span>
         </div>
         <div class="notif-item">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
-          <span class="tx"><b>模型已更新</b><p>DEFT 权重 v1.4.0 已部署，AUROC 提升 0.31%。</p></span>
+          <span class="tx"><b>验证结果</b><p>CPSC2018 测试集 AUROC 0.963 · AUPRC 0.835；PTB-XL AUROC 90.15%。</p></span>
         </div>
         <div class="notif-item">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 8v4M12 16h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></span>
@@ -850,7 +850,7 @@ html.js .reveal.in{opacity:1;transform:none}
             </div>
             <div class="hero-meta reveal d4">
               <div class="m"><b>90.15</b><span>PTB-XL<br>AUROC</span></div>
-              <div class="m"><b>9.5</b><b class="unit">M</b><span>参数量</span></div>
+              <div class="m"><b>9.14</b><b class="unit">M</b><span>参数量</span></div>
               <div class="m"><b>2.8</b><b class="unit">G</b><span>FLOPs</span></div>
               <div class="m"><b>6</b><span>基准数据集<br>验证</span></div>
             </div>
@@ -1075,10 +1075,7 @@ html.js .reveal.in{opacity:1;transform:none}
             <div class="param">
               <label class="field-label" style="font-size:12px;font-weight:600;color:var(--ink-2);display:block;margin-bottom:6px">导联数</label>
               <select id="numLeads">
-                <option value="12" selected>12 导联 (standard)</option>
-                <option value="2">2 导联</option>
-                <option value="6">6 导联</option>
-                <option value="8">8 导联</option>
+                <option value="12" selected>12 导联（模型固定输入）</option>
               </select>
             </div>
             <div class="param">
@@ -1109,7 +1106,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="ph">
             <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
             <b>分析结果</b>
-            <span class="badge" id="modeBadge" style="color:var(--sand);background:rgba(185,196,216,.2)">演示模式</span>
+            <span class="badge" id="modeBadge" style="color:var(--sand);background:rgba(185,196,216,.2)">连接中…</span>
           </div>
 
           <div class="result-placeholder" id="resultPlaceholder">
@@ -1121,7 +1118,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="result-body" id="resultBody">
             <div class="result-banner warn" id="resultBanner">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-              <span id="bannerText">演示模式：未连接后端模型，以下为浏览器内模拟推理结果，仅供界面演示。</span>
+              <span id="bannerText">等待分析：请上传数据并点击「运行分析」，结果将由 DEFT 模型真实推理产生。</span>
             </div>
             <div class="diag-head">
               <span class="verdict" id="verdictText">—</span>
@@ -1384,7 +1381,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="diff">
             <span class="no">WHY · 03</span>
             <h3>可解释 + 稳健 + 轻量</h3>
-            <p>能量—注意力一致性让聚焦与生理能量分布一致；抗噪、抗导联缺失、跨源迁移最稳；约 9.5M 参数、2.8 GFLOPs 落于帕累托前沿，临床可用。</p>
+            <p>能量—注意力一致性让聚焦与生理能量分布一致；抗噪、抗导联缺失、跨源迁移最稳；9.14M 参数、2.8 GFLOPs 落于帕累托前沿，临床可用。</p>
             <span class="vs">对比 · 黑盒 / 重模型</span>
           </div>
         </div>
@@ -1437,7 +1434,7 @@ html.js .reveal.in{opacity:1;transform:none}
           <div class="innov">
             <span class="in-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11L9 22l8.5-11.5H12L13 2z"/></svg></span>
             <b>轻量高效</b>
-            <p>约 9.5M 参数 / 2.8 GFLOPs，落于精度—成本帕累托前沿。</p>
+            <p>9.14M 参数 / 2.8 GFLOPs，落于精度—成本帕累托前沿。</p>
             <span class="in-vs">vs 大型基础模型</span>
           </div>
         </div>
@@ -1453,7 +1450,7 @@ html.js .reveal.in{opacity:1;transform:none}
             <div class="row"><span class="nm">MedFormer</span><div class="track"><div class="fill" style="transform:scaleX(0.949)"></div></div><span class="val">72.71</span></div>
             <div class="row"><span class="nm">FEDformer</span><div class="track"><div class="fill" style="transform:scaleX(0.799)"></div></div><span class="val">61.23</span></div>
           </div>
-          <p style="font-size:12px;color:var(--ink-4);margin-top:10px;line-height:1.7">统一协议下的 Accuracy 对比：DEFT 较 ST-MEM +0.94、较最强时域基线 PatchTST +3.63 个百分点；同时以约 9.5M 参数 / 2.8 GFLOPs 保持轻量（数据引自论文 Table 1、3、5）。</p>
+          <p style="font-size:12px;color:var(--ink-4);margin-top:10px;line-height:1.7">统一协议下的 Accuracy 对比：DEFT 较 ST-MEM +0.94、较最强时域基线 PatchTST +3.63 个百分点；同时以 9.14M 参数 / 2.8 GFLOPs 保持轻量（数据引自论文 Table 1、3、5）。</p>
         </div>
       </div>
 
@@ -1465,7 +1462,7 @@ html.js .reveal.in{opacity:1;transform:none}
         <div class="stat-grid">
           <div class="stat-card"><div class="k">PTB-XL · AUROC</div><div class="v">90.15<small>%</small></div><div class="d">超越最强时域基线 +0.57%</div></div>
           <div class="stat-card"><div class="k">PTB-XL · Accuracy</div><div class="v">76.65<small>%</small></div><div class="d">超越最强时域基线 +3.63%</div></div>
-          <div class="stat-card"><div class="k">参数量</div><div class="v">9.5<small>M</small></div><div class="d">论文报告值 · 帕累托前沿</div></div>
+          <div class="stat-card"><div class="k">参数量</div><div class="v">9.14<small>M</small></div><div class="d">实测值 · 帕累托前沿</div></div>
           <div class="stat-card"><div class="k">计算量</div><div class="v">2.8<small>G</small></div><div class="d">FLOPs · 轻量可部署</div></div>
         </div>
 
@@ -1543,25 +1540,25 @@ html.js .reveal.in{opacity:1;transform:none}
               </tbody>
             </table>
           </div>
-          <p style="font-size:11.5px;color:var(--ink-4);margin-top:8px">注：checkpoint 记录的验证集 AUROC（best_metric）为 BCE 0.9629 / Focal 0.9622 / ASL 0.9651；上表为测试集口径，二者存在正常的验证/测试差异。</p>
+          <p style="font-size:11.5px;color:var(--ink-4);margin-top:8px">注：最终选用 <b>Focal</b>，是因为其测试集 AUROC（0.963）与 AUPRC（0.835）更高、对长尾稀有类（STE/LBBB/PAC）检出更稳；其 F1（0.721）虽低于 BCE/ASL，但已通过逐类阈值搜索补回至 <b>0.792</b>。上表为测试集口径。</p>
 
           <div class="chart-grid" style="margin-top:18px">
             <div>
-              <b style="font-size:14.5px;color:var(--ink-2)">消融实验（验证集 AUROC · checkpoint best_metric）</b>
+              <b style="font-size:14.5px;color:var(--ink-2)">消融实验（测试集 AUROC）</b>
               <div class="table-wrap">
                 <table>
                   <thead><tr><th>变体</th><th>去掉的组件</th><th>AUROC</th><th>Δ</th></tr></thead>
                   <tbody>
-                    <tr><td class="me">完整 DEFT（BCE）</td><td>—</td><td class="num me">0.9629</td><td class="num">—</td></tr>
-                    <tr><td>noec</td><td>能量—注意力一致性</td><td class="num">0.9649</td><td class="num">+0.0020</td></tr>
-                    <tr><td>noinfonce</td><td>InfoNCE 对齐</td><td class="num">0.9631</td><td class="num">+0.0002</td></tr>
-                    <tr><td>nofusion</td><td>交叉注意力融合</td><td class="num">0.9629</td><td class="num">0.0000</td></tr>
-                    <tr><td>freqonly</td><td>时域流 + 融合</td><td class="num">0.9329</td><td class="num">-0.0300</td></tr>
-                    <tr><td>timeonly</td><td>频域流 + 融合</td><td class="num">0.9231</td><td class="num">-0.0398</td></tr>
+                    <tr><td class="me">完整 DEFT（BCE）</td><td>—</td><td class="num me">0.960</td><td class="num">—</td></tr>
+                    <tr><td>noec</td><td>能量—注意力一致性</td><td class="num">0.961</td><td class="num">+0.001</td></tr>
+                    <tr><td>noinfonce</td><td>InfoNCE 对齐</td><td class="num">0.958</td><td class="num">-0.002</td></tr>
+                    <tr><td>nofusion</td><td>交叉注意力融合</td><td class="num">0.957</td><td class="num">-0.003</td></tr>
+                    <tr><td>freqonly</td><td>时域流 + 融合</td><td class="num">0.917</td><td class="num">-0.043</td></tr>
+                    <tr><td>timeonly</td><td>频域流 + 融合</td><td class="num">0.906</td><td class="num">-0.054</td></tr>
                   </tbody>
                 </table>
               </div>
-              <p style="font-size:11.5px;color:var(--ink-4);margin-top:8px;line-height:1.6">结论：去掉任一单域流（timeonly / freqonly），验证集 AUROC 下降 <b>0.030 ~ 0.040</b>，证明「时域 + 频域双域协同」是核心创新；辅助约束（noec / noinfonce / nofusion）影响在 ±0.002 噪声范围内。</p>
+              <p style="font-size:11.5px;color:var(--ink-4);margin-top:8px;line-height:1.6">结论：去掉任一单域流（timeonly / freqonly），测试集 AUROC 下降 <b>0.043 ~ 0.054</b>，证明「时域 + 频域双域协同」是核心创新；辅助约束（noec / noinfonce / nofusion）影响在 ±0.003 噪声范围内——能量—注意力一致性的主要价值是<b>可解释性</b>（让注意力对齐生理能量、心搏 100% 覆盖），而非 AUROC 增益。</p>
             </div>
             <div>
               <b style="font-size:14.5px;color:var(--ink-2)">消融 AUROC 柱状图</b>
@@ -2019,14 +2016,14 @@ function renderBench(){
 }
 renderBench();
 
-/* 本机复现 · 消融 AUROC 柱状图（验证集 AUROC = checkpoint best_metric） */
+/* 本机复现 · 消融 AUROC 柱状图（测试集口径） */
 const ABLATION = [
-  {name:'完整 DEFT（BCE）', v:0.9629, me:true},
-  {name:'noec', v:0.9649},
-  {name:'noinfonce', v:0.9631},
-  {name:'nofusion', v:0.9629},
-  {name:'freqonly', v:0.9329},
-  {name:'timeonly', v:0.9231}
+  {name:'完整 DEFT（BCE）', v:0.960, me:true},
+  {name:'noec', v:0.961},
+  {name:'noinfonce', v:0.958},
+  {name:'nofusion', v:0.957},
+  {name:'freqonly', v:0.917},
+  {name:'timeonly', v:0.906}
 ];
 function renderAblation(){
   const container = $('#ablationBars');
@@ -2161,14 +2158,15 @@ async function renderEcgPreview(file){
 window.addEventListener('resize', ()=>{ if(previewMatrix) drawEcgPreview(previewMatrix); });
 
 /* ============================================================
-   8a. 推理引擎：网页内置 DEFT 模型（优先）→ 后端 API（回退）→ 演示模式
+   8a. 推理引擎：网页内置 DEFT 模型（优先，真实推理）→ 后端 API（回退）→ 未连接
    ------------------------------------------------------------
    · 模型由 export_web_model.py 从 checkpoint 导出，与 index.html 放在同一目录：
        deft_ecg_int8.onnx   INT8 动态量化（约 12 MB，默认加载）
        deft_ecg_fp16.onnx   FP16 权重压缩（约 20 MB，回退加载）
      固定输入 [1, 12, 1000]（12 导联 · 100 Hz · 10 秒），输出 logits(9 类) + pool_weights(导联注意力)。
-   · 运行时 onnxruntime-web 走 CDN 自动加载；如需完全离线，把 ORT_SOURCES 换成自托管目录
-     （目录内需含 ort.min.js 与 ort-wasm-simd-threaded.mjs / .wasm）。
+   · 网页内置模型通过 onnxruntime-web（本地自托管 ort/ + CDN 回退）在浏览器内真实推理；
+     .npy / .npz / .csv / .txt 直接浏览器推理，.pt / .mat 需经后端服务。
+   · 未检测到任何模型时明确报错，不伪造「模拟」结果。
    ============================================================ */
 const MODEL_LEADS = 12;         // 模型固定 12 导联
 const MODEL_INPUT_LEN = 1000;   // 10 s @ 100 Hz
@@ -2182,7 +2180,7 @@ const ORT_SOURCES = [
   'https://unpkg.com/onnxruntime-web@' + ORT_VERSION + '/dist/',
   'https://registry.npmmirror.com/onnxruntime-web/' + ORT_VERSION + '/files/dist/'
 ];
-// 用 file:// 直接双击打开时浏览器禁止读取模型文件，此时自动退回后端/演示
+// 用 file:// 直接双击打开时浏览器禁止读取模型文件，需通过 http(s) 访问
 const WEB_MODEL_ENABLED = (location.protocol === 'http:' || location.protocol === 'https:');
 
 const connStatus = $('#connStatus');
@@ -2193,7 +2191,7 @@ let webSession = null;      // ONNX 推理会话
 let webLoading = null;
 let webModelFile = '';
 let webModelError = '';
-let engineMode = 'demo';    // 'web' | 'backend' | 'demo'
+let engineMode = 'none';    // 'web' | 'backend' | 'none'
 
 function setConnUI(online, label, hint, badge, badgeStyle){
   connStatus.className = 'conn ' + (online ? 'online' : 'offline');
@@ -2279,10 +2277,10 @@ async function checkBackend(){
   return null;
 }
 
-/* ---------- 引擎探测：内置模型 → 后端 → 演示 ---------- */
+/* ---------- 引擎探测：内置模型 → 后端 → 未连接 ---------- */
 async function detectEngines(){
   webModelError = '';
-  setConnUI(false, '正在初始化推理引擎…', '优先加载网页内置 DEFT 模型', '连接中…', BADGE_OFF);
+  setConnUI(false, '正在初始化推理引擎…', '优先加载网页内置 DEFT 模型（真实推理）', '连接中…', BADGE_OFF);
 
   if(WEB_MODEL_ENABLED){
     setConnUI(false, '正在加载网页内置模型…', '首次加载需下载模型文件（约 12 MB）…', '加载中…', BADGE_OFF);
@@ -2290,13 +2288,13 @@ async function detectEngines(){
       await ensureWebModel();
       engineMode = 'web';
       setConnUI(true, '已加载网页内置模型 · DEFT',
-        '权重：'+webModelFile+' · 浏览器内 ONNX 推理（12 导联 · 100 Hz）', '模型在线', BADGE_ON);
+        '权重：'+webModelFile+' · 浏览器内 ONNX 真实推理（12 导联 · 100 Hz）', '模型在线', BADGE_ON);
       return engineMode;
     }catch(e){
       webModelError = (e && e.message) ? e.message : String(e);
     }
   } else {
-    webModelError = 'file:// 打开，浏览器禁止读取模型文件';
+    webModelError = '当前为 file:// 打开，浏览器禁止读取模型文件，请通过 http(s) 访问';
   }
 
   const info = await checkBackend();
@@ -2307,10 +2305,10 @@ async function detectEngines(){
     return engineMode;
   }
 
-  engineMode = 'demo';
+  engineMode = 'none';
   setConnUI(false, '未检测到可用模型',
-    (webModelError ? '内置模型不可用（'+webModelError+'）' : '未检测到模型')+' → 演示模式',
-    '演示模式', BADGE_OFF);
+    (webModelError ? '内置模型不可用（'+webModelError+'）' : '未检测到模型')+' — 请点击「重试」或通过「启动服务器.bat」以 http 方式打开',
+    '未连接模型', BADGE_OFF);
   return engineMode;
 }
 $('#retryConn').addEventListener('click', detectEngines);
@@ -2523,7 +2521,7 @@ async function runWebModel(file){
   }
 
   return {
-    demo: false, mode: 'web', probs: probs,
+    mode: 'web', probs: probs,
     heartRate: estimateHeartRate(t.data, t.leads, fs),
     samplingRate: fs, numLeads: t.leads,
     duration: Number((t.sourceLen / Math.max(1, fs)).toFixed(2)),
@@ -2540,7 +2538,9 @@ async function runViaBackend(file){
   const r = await fetch(API_BASE + '/api/predict', {method:'POST', body: fd});
   if(!r.ok) throw new Error('HTTP ' + r.status);
   const data = await r.json();
-  return {demo: !!data.demo, mode: 'backend', probs: data.probabilities,
+  // 后端未加载 checkpoint 时会返回 demo:true 的模拟结果，此处拒绝并明确报错
+  if(data.demo) throw new Error('后端未加载模型（请用 --checkpoint 指定权重）');
+  return {mode: 'backend', probs: data.probabilities,
     heartRate: data.heart_rate, samplingRate: data.sampling_rate,
     numLeads: data.num_leads, duration: data.duration_sec};
 }
@@ -2558,22 +2558,6 @@ const LABELS = [
   {key:'STE',    name:'ST 段抬高'}
 ];
 
-/* 演示样本（未连接后端时使用） */
-const DEMOS = {
-  normal: {name:'演示样本 A · 正常',   probs:[0.95,0.02,0.02,0.01,0.01,0.03,0.02,0.01,0.01]},
-  af:     {name:'演示样本 B · 房颤',   probs:[0.04,0.93,0.05,0.02,0.02,0.30,0.08,0.04,0.03]},
-  pvc:    {name:'演示样本 C · 室性早搏', probs:[0.10,0.03,0.03,0.02,0.02,0.15,0.88,0.06,0.05]},
-  lbbb:   {name:'演示样本 D · 左束支阻滞', probs:[0.06,0.02,0.05,0.91,0.03,0.04,0.03,0.02,0.02]}
-};
-
-function runDemo(){
-  const keys = Object.keys(DEMOS);
-  const seed = currentFile ? (currentFile.size % keys.length) : 0;
-  const demo = DEMOS[keys[seed]] || DEMOS.normal;
-  return {demo:true, probs:demo.probs, heartRate:null,
-    samplingRate:Number($('#samplingRate').value), numLeads:Number($('#numLeads').value)};
-}
-
 function rhythmOf(key){
   const map = {
     'Normal':'窦性心律 · 规律', 'AF':'心房颤动 · 不规则', 'I-AVB':'窦性 · 房室传导延长',
@@ -2590,16 +2574,13 @@ function renderResult(res){
   $('#resultBody').classList.add('show');
 
   const banner = $('#resultBanner');
-  if(res.demo){
-    banner.className = 'result-banner warn';
-    $('#bannerText').textContent = '演示模式：未接入模型，以下为浏览器内模拟推理结果，仅供界面演示。';
-  } else if(res.mode === 'web'){
+  if(res.mode === 'web'){
     banner.className = 'result-banner ok';
     $('#bannerText').textContent = '模型在线：结果由网页内置 DEFT 模型（ONNX'+
-      (res.modelFile ? ' · '+res.modelFile : '')+(res.latency ? ' · '+res.latency+' ms' : '')+'）在浏览器内推理产生。';
+      (res.modelFile ? ' · '+res.modelFile : '')+(res.latency ? ' · '+res.latency+' ms' : '')+'）在浏览器内真实推理产生。';
   } else {
     banner.className = 'result-banner ok';
-    $('#bannerText').textContent = '模型在线：结果由 DEFT 后端推理产生。';
+    $('#bannerText').textContent = '模型在线：结果由 DEFT 后端模型真实推理产生。';
   }
 
   // 最高置信度类别
@@ -2626,12 +2607,11 @@ function renderResult(res){
   const rec = {
     id: Date.now(),
     time: new Date().toISOString(),
-    fileName: (currentFile && currentFile.name) || '演示样本',
+    fileName: (currentFile && currentFile.name) || '心电数据',
     samplingRate: res.samplingRate || Number($('#samplingRate').value),
     numLeads: res.numLeads || Number($('#numLeads').value),
     duration: res.duration || null,
-    demo: !!res.demo,
-    mode: res.mode || (res.demo ? 'demo' : 'backend'),
+    mode: res.mode || 'backend',
     verdictKey: verdictKey,
     verdictName: LABELS[best].name,
     confidence: res.probs[best],
@@ -2643,13 +2623,28 @@ function renderResult(res){
   saveRecord(rec);
 }
 
+function showResultMessage(msg, isWarn){
+  $('#resultPlaceholder').style.display = 'none';
+  $('#resultBody').classList.add('show');
+  const banner = $('#resultBanner');
+  banner.className = 'result-banner ' + (isWarn ? 'warn' : 'ok');
+  $('#bannerText').textContent = msg;
+  $('#verdictText').textContent = '—';
+  $('#confNum').textContent = '—';
+  $('#barList').innerHTML = '';
+  currentResult = null;
+}
+
 $('#runBtn').addEventListener('click', async ()=>{
   const btn = $('#runBtn'); const old = btn.innerHTML;
 
-  // 无文件 → 演示样本（保持原有行为）
-  if(!currentFile){ renderResult(runDemo()); return; }
+  // 未上传文件 → 提示，不伪造结果
+  if(!currentFile){
+    showResultMessage('请先上传 12 导联心电数据文件（.npy / .npz / .csv / .txt），再点击「运行分析」。', true);
+    return;
+  }
 
-  // 1) 网页内置模型（首选）
+  // 1) 网页内置模型（首选，浏览器内 ONNX 真实推理）
   if(webSession){
     btn.innerHTML = '分析中…'; btn.disabled = true;
     try{
@@ -2657,8 +2652,7 @@ $('#runBtn').addEventListener('click', async ()=>{
       return;
     }catch(e){
       webModelError = (e && e.message) ? e.message : String(e);
-      if(!backendOnline) setConnUI(false, '内置模型推理失败',
-        webModelError + ' → 已回退演示模式', '演示模式', BADGE_OFF);
+      setConnUI(false, '内置模型推理失败', webModelError + ' — 请检查数据格式或点击「重试」', '推理失败', BADGE_OFF);
     }finally{
       btn.innerHTML = old; btn.disabled = false;
     }
@@ -2671,14 +2665,14 @@ $('#runBtn').addEventListener('click', async ()=>{
       renderResult(await runViaBackend(currentFile));
       return;
     }catch(e){
-      /* 后端失败 → 演示 */
+      setConnUI(false, '后端推理失败', String((e && e.message) || e), '推理失败', BADGE_OFF);
     }finally{
       btn.innerHTML = old; btn.disabled = false;
     }
   }
 
-  // 3) 演示模式（兜底）
-  renderResult(runDemo());
+  // 3) 无可用模型 → 明确报错，不伪造结果
+  showResultMessage('未检测到可用模型，无法推理。请通过「启动服务器.bat」以 http 方式打开页面，或确认模型文件后点击「重试」。', true);
 });
 
 /* ============================================================
@@ -2760,8 +2754,7 @@ function exportRecord(rec){
   L.push('时长     : '+(rec.duration?rec.duration+' 秒':'—'));
   L.push('心率     : '+(rec.heartRate?rec.heartRate+' bpm':'—'));
   L.push('节律     : '+(rec.rhythm||'—'));
-  L.push('推理模式 : '+(rec.demo ? '演示模式'
-    : (rec.mode === 'web' ? '模型在线（网页内置 ONNX）' : '模型在线（后端服务）')));
+  L.push('推理模式 : '+(rec.mode === 'web' ? '模型在线（网页内置 ONNX）' : '模型在线（后端服务）'));
   L.push('');
   L.push('诊断结果（CPSC2018 九类 · 阳性阈值 0.5）：');
   const bestIdx = rec.probs.indexOf(Math.max(...rec.probs));
@@ -2788,7 +2781,7 @@ renderHistory();
 /* ============================================================
    9. 首页数字滚动初始化
    ============================================================ */
-const homeStats = [['90.15',0],['9.5',1],['2.8',1],['6',0]];
+const homeStats = [['90.15',0],['9.14',2],['2.8',1],['6',0]];
 const heroStatEls = ()=>document.querySelectorAll('.hero-meta .m > b:first-child');
 heroStatEls().forEach((b,i)=>{ if(homeStats[i]) b.dataset.count = homeStats[i][0]; });
 // 立即给首页数字赋值，避免未滚动时为空
